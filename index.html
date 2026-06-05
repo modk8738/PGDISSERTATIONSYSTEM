@@ -1,0 +1,3569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PG Dissertation Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0f172a; --bg-soft:#111c35; --card:#1e293b; --card-2:#243247; --text:#e2e8f0; --muted:#94a3b8;
+      --primary:#3b82f6; --primary-hover:#2563eb; --border:#334155;
+      --pending:#f59e0b; --review:#38bdf8; --revision:#fb7185; --approved:#22c55e;
+      --error:#ef4444; --success:#22c55e; --radius:14px;
+    }
+    body.theme-light {
+      --bg:#f8fafc; --bg-soft:#ffffff; --card:#ffffff; --card-2:#f1f5f9; --text:#0f172a; --muted:#64748b;
+      --primary:#2563eb; --primary-hover:#1d4ed8; --border:#cbd5e1;
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:"Inter",system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; line-height:1.5; -webkit-font-smoothing:antialiased; }
+    .app-bg { position:fixed; inset:0; background:radial-gradient(circle at 85% 5%,#1d4ed8 0%,transparent 40%),radial-gradient(circle at 10% 95%,#0ea5e9 0%,transparent 25%); opacity:.18; pointer-events:none; }
+    .app-shell { position:relative; max-width:1180px; margin:0 auto; padding:28px 20px 40px; }
+    .site-footer { text-align:center; padding:24px 20px 36px; border-top:1px solid rgba(148,163,184,.15); margin-top:8px; }
+    .site-footer-inner { max-width:1180px; margin:0 auto; display:flex; flex-direction:column; align-items:center; gap:8px; }
+    .site-footer p { margin:0; color:var(--muted); font-size:13px; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; gap:16px; flex-wrap:wrap; }
+    .topbar-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+    .nav-btn { display:inline-flex; align-items:center; gap:6px; }
+    .nav-btn svg { width:16px; height:16px; flex-shrink:0; }
+    .lang-select-wrap { position:relative; display:inline-flex; align-items:center; }
+    .lang-logo { position:absolute; left:10px; pointer-events:none; font-size:14px; opacity:.9; }
+    .lang-select { min-width:140px; padding:8px 10px 8px 30px; border-radius:10px; font-size:13px; background:var(--bg-soft); color:var(--text); border:1px solid var(--border); cursor:pointer; }
+    .eyebrow { margin:0; color:var(--review); font-size:12px; text-transform:uppercase; letter-spacing:.12em; font-weight:600; }
+    h1 { margin:6px 0 0; font-size:clamp(1.5rem,3vw,1.875rem); font-weight:700; letter-spacing:-.02em; }
+    h2 { font-size:1.35rem; font-weight:700; letter-spacing:-.01em; }
+    h3 { font-size:1.125rem; font-weight:600; }
+    h2,h3,h4,p { margin:0; }
+    .app-title-link { background:none; border:none; color:inherit; cursor:pointer; padding:0; text-align:left; font:inherit; transition:color .2s; }
+    .app-title-link:hover,.app-title-link:focus-visible { color:var(--primary); outline:none; }
+    .panel,.card { background:linear-gradient(180deg,var(--card) 0%,var(--card-2) 100%); border:1px solid rgba(148,163,184,.14); border-radius:var(--radius); box-shadow:0 8px 32px rgba(2,6,23,.35); }
+    .panel { max-width:480px; margin:0 auto; padding:32px; }
+    .panel-wide { max-width:560px; }
+    .panel-title { margin-bottom:22px; }
+    .panel-title p { margin-top:8px; font-size:15px; line-height:1.6; }
+    .panel-title p,.muted { color:var(--muted); }
+    .form-grid,.stack { display:grid; gap:14px; }
+    .actions-row { margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; }
+    label { display:grid; gap:6px; color:var(--text); font-size:14px; font-weight:500; }
+    input,select,textarea { width:100%; background:var(--bg-soft); color:var(--text); border:1px solid var(--border); border-radius:10px; padding:12px 14px; outline:none; font:inherit; font-size:14px; transition:border-color .2s,box-shadow .2s; }
+    input:focus,select:focus,textarea:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(59,130,246,.22); }
+    input:invalid:not(:placeholder-shown),input.field-error { border-color:var(--error); }
+    .field-hint { font-size:12px; color:var(--muted); font-weight:400; }
+    .field-error-msg { font-size:12px; color:#fca5a5; font-weight:500; min-height:1em; }
+    .btn { border:none; border-radius:10px; padding:12px 18px; font-weight:600; font-size:14px; cursor:pointer; transition:background .2s,transform .15s,box-shadow .2s,opacity .2s; display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:inherit; }
+    .btn:disabled { opacity:.55; cursor:not-allowed; transform:none; }
+    .btn-primary { background:var(--primary); color:#fff; box-shadow:0 2px 8px rgba(59,130,246,.3); }
+    .btn-primary:hover:not(:disabled) { background:var(--primary-hover); transform:translateY(-1px); box-shadow:0 4px 14px rgba(59,130,246,.35); }
+    .btn-ghost { background:transparent; color:var(--text); border:1px solid var(--border); }
+    .btn-ghost:hover:not(:disabled) { background:rgba(51,65,85,.35); border-color:var(--primary); }
+    body.theme-light .btn-ghost:hover:not(:disabled) { background:rgba(148,163,184,.2); }
+    .btn.is-loading { pointer-events:none; }
+    .btn-spinner { width:16px; height:16px; border:2px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .grid.two-cols { display:grid; gap:20px; grid-template-columns:1.15fr .85fr; }
+    .card { padding:22px; }
+    .card-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:12px; flex-wrap:wrap; }
+    .card-head.split { align-items:flex-end; }
+    .badge { background:rgba(56,189,248,.12); color:#7dd3fc; border:1px solid rgba(56,189,248,.3); font-size:11px; font-weight:600; padding:5px 11px; border-radius:999px; text-transform:uppercase; letter-spacing:.04em; }
+    .status-badge { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; padding:5px 12px; border-radius:999px; white-space:nowrap; }
+    .status-badge--pending { background:rgba(245,158,11,.15); color:#fbbf24; border:1px solid rgba(245,158,11,.35); }
+    .status-badge--under-review { background:rgba(56,189,248,.15); color:#7dd3fc; border:1px solid rgba(56,189,248,.35); }
+    .status-badge--needs-revision { background:rgba(251,113,133,.15); color:#fda4af; border:1px solid rgba(251,113,133,.35); }
+    .status-badge--approved { background:rgba(34,197,94,.15); color:#86efac; border:1px solid rgba(34,197,94,.35); }
+    .status-badge--rejected { background:rgba(239,68,68,.15); color:#fca5a5; border:1px solid rgba(239,68,68,.35); }
+    .summary-grid { display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); margin-bottom:20px; }
+    .summary-card { background:var(--bg-soft); border:1px solid var(--border); border-radius:12px; padding:16px; transition:transform .2s,border-color .2s; }
+    .summary-card:hover { transform:translateY(-2px); border-color:rgba(59,130,246,.4); }
+    .summary-card .summary-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; background:rgba(59,130,246,.12); color:var(--primary); }
+    .summary-card .summary-icon svg { width:18px; height:18px; }
+    .summary-card p { color:var(--muted); font-size:12px; font-weight:500; text-transform:uppercase; letter-spacing:.04em; margin:0; }
+    .summary-card h4 { font-size:1.75rem; font-weight:700; margin:6px 0 0; letter-spacing:-.02em; }
+    .stats .stat-grid { display:grid; gap:12px; grid-template-columns:repeat(2,1fr); }
+    .stats .stat-grid div { background:var(--bg-soft); border:1px solid var(--border); padding:16px; border-radius:12px; transition:border-color .2s; }
+    .stats .stat-grid div:hover { border-color:rgba(59,130,246,.35); }
+    .stats .stat-grid p { color:var(--muted); font-size:12px; font-weight:500; text-transform:uppercase; letter-spacing:.04em; }
+    .stats .stat-grid h4 { font-size:1.65rem; font-weight:700; margin-top:8px; }
+    .table-wrap { overflow-x:auto; border-radius:10px; border:1px solid var(--border); }
+    table { width:100%; border-collapse:collapse; min-width:720px; }
+    th,td { text-align:left; padding:14px 16px; border-bottom:1px solid var(--border); vertical-align:top; font-size:14px; }
+    thead th { color:var(--muted); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; background:rgba(15,23,42,.4); }
+    body.theme-light thead th { background:rgba(241,245,249,.8); }
+    tbody tr { transition:background .15s; }
+    tbody tr:hover { background:rgba(51,65,85,.3); }
+    body.theme-light tbody tr:hover { background:rgba(148,163,184,.15); }
+    tbody tr:last-child td { border-bottom:none; }
+    .empty-state { text-align:center; padding:40px 24px; color:var(--muted); }
+    .empty-state svg { width:48px; height:48px; margin-bottom:14px; opacity:.5; }
+    .empty-state h4 { color:var(--text); margin-bottom:6px; font-size:1rem; }
+    .actions { display:grid; gap:10px; min-width:220px; }
+    .actions textarea { min-height:80px; resize:vertical; }
+    .small { padding:8px 12px; font-size:13px; }
+    .mt { margin-top:20px; }
+    .readonly-note { margin-top:12px; border:1px solid rgba(251,113,133,.4); background:rgba(251,113,133,.1); color:#fecdd3; border-radius:10px; padding:12px 14px; font-size:13px; }
+    .toast { position:fixed; right:20px; bottom:20px; padding:14px 18px; background:#0b1221; border-radius:12px; color:#e2e8f0; box-shadow:0 12px 40px rgba(2,6,23,.55); z-index:200; max-width:360px; font-size:14px; font-weight:500; animation:toastIn .3s ease; }
+    .toast--success { border:1px solid rgba(34,197,94,.5); background:#052e16; color:#bbf7d0; }
+    .toast--error { border:1px solid rgba(239,68,68,.5); background:#450a0a; color:#fecaca; }
+    @keyframes toastIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    .footer-link { background:none; border:none; color:var(--muted); cursor:pointer; font:inherit; padding:0; font-size:13px; transition:color .2s; }
+    .footer-link:hover,.footer-link:focus-visible { color:var(--primary); outline:none; }
+    .hidden { display:none !important; }
+    .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+    .landing { padding:8px 0 24px; }
+    .hero { text-align:center; padding:48px 20px 40px; max-width:760px; margin:0 auto; }
+    .hero-title { font-size:clamp(2rem,5vw,2.75rem); font-weight:700; letter-spacing:-.03em; line-height:1.15; margin:12px 0 18px; }
+    .hero-desc { font-size:1.05rem; color:var(--muted); line-height:1.7; max-width:600px; margin:0 auto 28px; }
+    .hero-cta { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+    .hero-features { display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); margin-top:36px; }
+    .feature-card { padding:24px; text-align:left; transition:transform .2s,box-shadow .2s; }
+    .feature-card:hover { transform:translateY(-3px); box-shadow:0 16px 40px rgba(2,6,23,.4); }
+    .feature-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; margin-bottom:14px; background:rgba(59,130,246,.12); color:var(--primary); }
+    .feature-icon svg { width:22px; height:22px; }
+    .feature-card h3 { margin-bottom:8px; }
+    .feature-card p { color:var(--muted); font-size:14px; line-height:1.65; }
+    .workflow-steps { display:flex; gap:8px; flex-wrap:wrap; margin-top:16px; }
+    .workflow-step { flex:1; min-width:120px; padding:12px; background:var(--bg-soft); border:1px solid var(--border); border-radius:10px; text-align:center; font-size:12px; font-weight:600; color:var(--muted); }
+    .workflow-step.active { border-color:var(--primary); color:var(--primary); background:rgba(59,130,246,.08); }
+    .upload-progress { margin-top:10px; }
+    .upload-progress-bar { height:6px; background:var(--border); border-radius:999px; overflow:hidden; }
+    .upload-progress-fill { height:100%; background:var(--primary); border-radius:999px; transition:width .3s ease; width:0%; }
+    .upload-progress-text { font-size:12px; color:var(--muted); margin-top:6px; }
+    .feedback-history { margin-top:6px; font-size:12px; color:var(--muted); }
+    .feedback-history summary { cursor:pointer; color:var(--primary); font-weight:500; }
+    .feedback-history ul { margin:6px 0 0; padding-left:1.1rem; line-height:1.6; }
+    .feature-section-title { display:flex; align-items:center; gap:8px; }
+    .feature-section-title svg { width:18px; height:18px; color:var(--primary); }
+    .cert-preview { border:2px solid var(--border); border-radius:12px; padding:24px; text-align:center; background:var(--bg-soft); }
+    .cert-preview h3 { font-size:1.5rem; margin-bottom:8px; }
+    .file-input-native { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+    .file-picker-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .file-name-display { font-size:13px; color:var(--muted); word-break:break-all; }
+    .open-file-name { background:none; border:none; padding:0; margin:0; font:inherit; color:#93c5fd; font-weight:600; cursor:pointer; text-decoration:underline; text-underline-offset:3px; text-align:left; word-break:break-all; }
+    .open-file-name:hover { color:#bfdbfe; }
+    .btn-danger-outline { border:1px solid rgba(248,113,113,.55); color:#fecaca; background:transparent; }
+    .btn-danger-outline:hover:not(:disabled) { background:rgba(248,113,113,.12); color:#fff; }
+    .nav-badge { position:relative; }
+    .nav-badge-count { position:absolute; top:-6px; right:-6px; min-width:18px; height:18px; padding:0 5px; border-radius:999px; background:var(--revision); color:#fff; font-size:10px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; }
+    .nav-badge-count.hidden { display:none; }
+    .workspace-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+    .workspace-tab { padding:8px 14px; border-radius:10px; border:1px solid var(--border); background:var(--bg-soft); color:var(--text); cursor:pointer; font-size:13px; font-weight:600; font-family:inherit; }
+    .workspace-tab.active { border-color:var(--primary); background:rgba(59,130,246,.12); color:var(--primary); }
+    .workspace-panel.hidden { display:none !important; }
+    .calendar-list,.timeline-list { display:grid; gap:10px; }
+    .calendar-event,.timeline-item { padding:12px 14px; border-radius:10px; border:1px solid var(--border); background:var(--bg-soft); }
+    .calendar-event-type { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--review); font-weight:600; margin-bottom:4px; }
+    .timeline-item { border-left:3px solid var(--primary); border-radius:0 10px 10px 0; }
+    .timeline-item time { font-size:12px; color:var(--muted); }
+    .gantt-row { display:grid; grid-template-columns:minmax(100px,140px) 1fr minmax(90px,120px); gap:10px; align-items:center; margin-bottom:10px; font-size:13px; }
+    .gantt-bar-wrap { height:8px; background:var(--border); border-radius:999px; overflow:hidden; }
+    .gantt-bar { height:100%; background:var(--approved); border-radius:999px; }
+    .chart-mini { display:flex; gap:8px; align-items:flex-end; height:88px; margin-top:12px; }
+    .chart-bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+    .chart-bar { width:100%; background:rgba(59,130,246,.4); border-radius:6px 6px 0 0; min-height:8px; transition:height .3s; }
+    .chart-bar-label { font-size:10px; color:var(--muted); text-align:center; }
+    .compare-grid { display:grid; gap:14px; grid-template-columns:1fr 1fr; }
+    .compare-card { padding:16px; border:1px solid var(--border); border-radius:10px; background:var(--bg-soft); }
+    .message-thread { max-height:300px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin:12px 0; padding:12px; background:var(--bg-soft); border-radius:10px; border:1px solid var(--border); }
+    .message-bubble { max-width:88%; padding:10px 12px; border-radius:10px; font-size:14px; line-height:1.5; }
+    .message-bubble.sent { align-self:flex-end; background:rgba(59,130,246,.22); }
+    .message-bubble.received { align-self:flex-start; background:rgba(51,65,85,.45); }
+    .message-bubble small { display:block; margin-top:4px; font-size:11px; color:var(--muted); }
+    .ai-mock-box { padding:14px; border-radius:10px; background:var(--bg-soft); border:1px dashed var(--border); min-height:72px; font-size:14px; line-height:1.6; }
+    .notif-item { padding:12px 14px; border-bottom:1px solid var(--border); cursor:pointer; transition:background .15s; }
+    .notif-item:hover { background:rgba(51,65,85,.25); }
+    .notif-item.unread { border-left:3px solid var(--primary); }
+    .notif-item.read { opacity:.75; }
+    .ref-item { padding:12px; border:1px solid var(--border); border-radius:10px; background:var(--bg-soft); margin-bottom:8px; }
+    .dash-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+    .analytics-grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); margin-bottom:18px; }
+    .report-print-area { padding:24px; }
+    @media (max-width:940px) { .grid.two-cols { grid-template-columns:1fr; } .hero { padding:32px 12px 28px; } .actions-row { flex-direction:column; } .actions-row .btn { width:100%; } .compare-grid { grid-template-columns:1fr; } }
+    @media (max-width:700px) { .gantt-row { grid-template-columns:1fr; } .topbar-right .nav-btn span:not(.nav-badge-count) { display:none; } .topbar-right .nav-btn { padding:10px 12px; } }
+    @media (max-width:600px) { .app-shell { padding:20px 14px 32px; } .panel { padding:24px 20px; } table { min-width:560px; } .summary-grid { grid-template-columns:repeat(2,1fr); } }
+    @media print {
+      .app-bg,.topbar,.site-footer,.btn,.toast,.report-print-area.hidden { display:none !important; }
+      body { background:#fff; color:#000; }
+      .cert-print-area,.report-print-area { display:block !important; border:3px double #000; padding:48px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-bg"></div>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow" id="t_eyebrow">Postgraduate Portal</p>
+        <button id="homeBtn" class="app-title-link" type="button">
+          <h1 id="t_appTitle">Dissertation System</h1>
+        </button>
+      </div>
+      <div class="topbar-right">
+        <div class="lang-select-wrap" aria-label="Language switcher">
+          <span class="lang-logo" aria-hidden="true">🌐</span>
+          <select id="langSelect" class="lang-select">
+            <option value="en">English</option>
+            <option value="ar">العربية</option>
+            <option value="ta">தமிழ்</option>
+          </select>
+        </div>
+        <button id="themeToggleBtn" class="btn btn-ghost" type="button" aria-label="Toggle theme"><span id="t_themeBtn">Theme</span></button>
+        <button id="featuresBtn" class="btn btn-ghost nav-btn hidden" type="button" aria-label="Academic tools">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span id="t_featuresNav">Tools</span>
+        </button>
+        <button id="journalBtn" class="btn btn-ghost nav-btn hidden" type="button" aria-label="Research workspace">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <span id="t_journalNav">Workspace</span>
+        </button>
+        <button id="notifBtn" class="btn btn-ghost nav-btn nav-badge hidden" type="button" aria-label="Notifications">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span id="notifBadge" class="nav-badge-count hidden">0</span>
+        </button>
+        <button id="messagesBtn" class="btn btn-ghost nav-btn nav-badge hidden" type="button" aria-label="Messages">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span id="msgBadge" class="nav-badge-count hidden">0</span>
+        </button>
+        <button id="logoutBtn" class="btn btn-ghost hidden" type="button"><span id="t_logoutBtn">Sign Out</span></button>
+      </div>
+    </header>
+
+    <section id="toast" class="toast hidden" role="status" aria-live="polite"></section>
+
+    <section id="landingView" class="landing" aria-label="Home">
+      <div class="hero">
+        <p class="eyebrow" id="t_heroEyebrow">Postgraduate Research Portal</p>
+        <h2 class="hero-title" id="t_heroTitle">Dissertation Management for Academic Excellence</h2>
+        <p class="hero-desc" id="t_heroDesc">A centralized platform for postgraduate students and supervisors to manage dissertation submissions, academic review, and research progress throughout the degree lifecycle.</p>
+        <div class="hero-cta">
+          <button id="landingLoginBtn" class="btn btn-primary" type="button"><span id="t_heroLoginBtn">Sign In</span></button>
+          <button id="landingRegisterBtn" class="btn btn-ghost" type="button"><span id="t_heroRegisterBtn">Create Account</span></button>
+        </div>
+      </div>
+      <div class="hero-features">
+        <article class="card feature-card">
+          <div class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+          <h3 id="t_featUploadTitle">Dissertation Submission</h3>
+          <p id="t_featUploadDesc">Upload versioned dissertation drafts in approved formats with deadline tracking and submission history.</p>
+        </article>
+        <article class="card feature-card">
+          <div class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <h3 id="t_featSupervisorTitle">Supervisor Review</h3>
+          <p id="t_featSupervisorDesc">Supervisors review submissions, provide structured feedback, and update academic approval status.</p>
+        </article>
+        <article class="card feature-card">
+          <div class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+          <h3 id="t_featProgressTitle">Progress Tracking</h3>
+          <p id="t_featProgressDesc">Monitor submission status, revision cycles, and chapter completion from a unified dashboard.</p>
+        </article>
+        <article class="card feature-card">
+          <div class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          <h3 id="t_featWorkflowTitle">Academic Workflow</h3>
+          <p id="t_featWorkflowDesc">Coordinate defense scheduling, office hours, announcements, and institutional research procedures.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="loginView" class="panel panel-wide hidden">
+      <div class="panel-title">
+        <h2 id="t_loginTitle">Sign In</h2>
+        <p id="t_loginSubtitle">Enter your credentials to access the postgraduate dissertation portal.</p>
+      </div>
+      <form id="loginForm" class="form-grid" novalidate>
+        <label for="role"><span id="t_roleLabel">Role</span>
+          <select id="role" name="role" required aria-required="true">
+            <option value="student" id="t_roleStudent">Student</option>
+            <option value="supervisor" id="t_roleSupervisor">Supervisor</option>
+          </select>
+        </label>
+        <label for="name"><span id="t_nameLabel">Username</span>
+          <input id="name" name="name" type="text" placeholder="Enter your username" required aria-required="true" autocomplete="username" maxlength="100" />
+          <span id="loginNameError" class="field-error-msg" role="alert"></span>
+        </label>
+        <label for="password"><span id="t_passwordLabel">Password</span>
+          <input id="password" name="password" type="password" placeholder="Enter your password" required aria-required="true" autocomplete="current-password" maxlength="128" />
+          <span id="loginPasswordError" class="field-error-msg" role="alert"></span>
+        </label>
+        <button class="btn btn-primary" type="submit" id="t_loginBtn">Sign In</button>
+      </form>
+      <div class="actions-row">
+        <button id="registerBtn" class="btn btn-ghost" type="button">Create Account</button>
+        <button id="loginBackBtn" class="btn btn-ghost" type="button">Back to Home</button>
+      </div>
+    </section>
+
+    <section id="signupView" class="panel panel-wide hidden">
+      <div class="panel-title">
+        <h2 id="t_signupTitle">Create Account</h2>
+        <p id="t_signupSubtitle">Register with your academic details to access the dissertation management portal.</p>
+      </div>
+      <form id="signupForm" class="form-grid" novalidate>
+        <label for="signupRole"><span id="t_signupRoleLabel">Role</span>
+          <select id="signupRole" name="role" required aria-required="true">
+            <option value="student" id="t_signupRoleStudent">Student</option>
+            <option value="supervisor" id="t_signupRoleSupervisor">Supervisor</option>
+          </select>
+        </label>
+        <label for="signupName"><span id="t_signupNameLabel">Full Name</span>
+          <input id="signupName" name="name" type="text" placeholder="Enter your full name" required aria-required="true" maxlength="100" />
+          <span id="signupNameError" class="field-error-msg" role="alert"></span>
+        </label>
+        <label for="signupEmail"><span id="t_signupEmailLabel">Email Address</span>
+          <input id="signupEmail" name="email" type="email" placeholder="name@university.edu" required aria-required="true" autocomplete="email" maxlength="120" />
+          <span id="signupEmailError" class="field-error-msg" role="alert"></span>
+        </label>
+        <label for="signupPhone"><span id="t_signupPhoneLabel">Phone Number</span>
+          <input id="signupPhone" name="phone" type="tel" placeholder="Enter your phone number" required aria-required="true" autocomplete="tel" maxlength="20" />
+          <span id="signupPhoneError" class="field-error-msg" role="alert"></span>
+        </label>
+        <label for="signupPassword"><span id="t_signupPasswordLabel">Password</span>
+          <input id="signupPassword" name="password" type="password" placeholder="Create a strong password" required aria-required="true" autocomplete="new-password" maxlength="128" />
+          <span class="field-hint" id="t_passwordHint">At least 8 characters with letters and numbers.</span>
+          <span id="signupPasswordError" class="field-error-msg" role="alert"></span>
+        </label>
+        <label for="signupConfirmPassword"><span id="t_signupConfirmPasswordLabel">Confirm Password</span>
+          <input id="signupConfirmPassword" name="confirmPassword" type="password" placeholder="Re-enter your password" required aria-required="true" autocomplete="new-password" maxlength="128" />
+          <span id="signupConfirmError" class="field-error-msg" role="alert"></span>
+        </label>
+        <button class="btn btn-primary" type="submit" id="t_signupSubmitBtn">Create Account</button>
+      </form>
+      <div class="actions-row">
+        <button id="signupBackBtn" class="btn btn-ghost" type="button">Back to Sign In</button>
+      </div>
+    </section>
+
+    <section id="studentView" class="hidden">
+      <div class="grid two-cols">
+        <article class="card">
+          <div class="card-head">
+            <h3 id="t_uploadTitle">Upload New Version</h3>
+            <span class="badge" id="studentBadge">Student</span>
+          </div>
+          <p class="muted" id="t_uploadSubtitle">Submit a new dissertation version in PDF or DOCX format. Maximum file size: 25 MB.</p>
+          <p class="muted small" id="deadlineInfo" style="margin-top:8px;"></p>
+          <form id="uploadForm" class="stack" novalidate>
+            <label for="docTypeSelect"><span id="t_docTypeLabel">Document Type</span>
+              <select id="docTypeSelect" required>
+                <option value="proposal">Proposal</option>
+                <option value="literature_review">Literature Review</option>
+                <option value="methodology">Methodology</option>
+                <option value="results">Results</option>
+                <option value="references">References</option>
+                <option value="final_dissertation" selected>Final Dissertation</option>
+              </select>
+            </label>
+            <label for="projectFile" style="position:relative;">
+              <span id="t_fileLabel">Dissertation File</span>
+              <div class="file-picker-row">
+                <input id="projectFile" class="file-input-native" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" aria-describedby="fileNameDisplay uploadFileError" required />
+                <button id="browseFileBtn" class="btn btn-ghost small" type="button" aria-label="Choose dissertation file">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <span id="t_browseFile">Choose File</span>
+                </button>
+                <span id="fileNameDisplay" class="file-name-display"></span>
+              </div>
+              <span id="uploadFileError" class="field-error-msg" role="alert"></span>
+            </label>
+            <div id="uploadProgressWrap" class="upload-progress hidden" aria-live="polite">
+              <div class="upload-progress-bar"><div id="uploadProgressFill" class="upload-progress-fill"></div></div>
+              <p id="uploadProgressText" class="upload-progress-text">Uploading…</p>
+            </div>
+            <button id="uploadBtn" class="btn btn-primary" type="submit">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span id="t_uploadBtn">Upload</span>
+            </button>
+          </form>
+        </article>
+
+        <article class="card stats">
+          <div class="card-head">
+            <h3 id="t_progressTitle">My Progress</h3>
+            <span class="badge" id="t_overviewBadge">Overview</span>
+          </div>
+          <div class="stat-grid">
+            <div><p id="t_totalLabel">Total</p><h4 id="totalCount">0</h4></div>
+            <div><p id="t_pendingLabel">Pending</p><h4 id="pendingCount">0</h4></div>
+            <div><p id="t_revisionLabel">Needs Revision</p><h4 id="revisionCount">0</h4></div>
+            <div><p id="t_approvedLabel">Approved</p><h4 id="approvedCount">0</h4></div>
+          </div>
+          <div class="workflow-steps" id="studentWorkflow" aria-label="Submission workflow"></div>
+          <div class="dash-actions">
+            <button id="openCompareBtn" class="btn btn-ghost small" type="button">Compare Versions</button>
+            <button id="openCalendarBtn" class="btn btn-ghost small" type="button">Academic Calendar</button>
+            <button id="downloadReportBtn" class="btn btn-ghost small" type="button">Download Report</button>
+          </div>
+          <div class="mt">
+            <button id="openSupervisorDetailsBtn" class="btn btn-ghost small" type="button">View Supervisor Details</button>
+          </div>
+        </article>
+      </div>
+
+      <article class="card mt">
+        <div class="card-head" style="flex-wrap:wrap; gap:10px;">
+          <h3 id="t_mySubmissions">My Submissions</h3>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-left:auto;">
+            <span class="badge" id="t_versionsBadge">Versions</span>
+            <button type="button" id="resetWorkBtn" class="btn btn-ghost small btn-danger-outline hidden">Reset all my work</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th id="t_thDocType">Type</th>
+                <th id="t_thFile">File</th>
+                <th id="t_thVersion">Version</th>
+                <th id="t_thStatus">Status</th>
+                <th id="t_thComment">Comment</th>
+                <th id="t_thUploadDate">Upload Date</th>
+              </tr>
+            </thead>
+            <tbody id="studentTableBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section id="supervisorView" class="hidden">
+      <div class="summary-grid" id="supervisorSummary" aria-label="Dashboard summary"></div>
+      <div class="analytics-grid" id="supervisorAnalytics" aria-label="Supervisor analytics"></div>
+      <div id="supervisorChartWrap" class="card" style="margin-bottom:18px;padding:18px;"></div>
+      <article class="card">
+        <div class="card-head split">
+          <div>
+            <h3 id="t_allSubmissions">All Submissions</h3>
+            <p class="muted" id="t_allSubtitle">Review submissions, provide feedback, and update academic status.</p>
+          </div>
+          <div class="filter-wrap">
+            <label><span id="t_filterLabel">Filter</span>
+              <select id="statusFilter">
+                <option value="all" id="t_filterAll">All</option>
+                <option value="Pending" id="t_filterPending">Pending</option>
+                <option value="Under Review" id="t_filterUnderReview">Under Review</option>
+                <option value="Needs Revision" id="t_filterNeedsRevision">Needs Revision</option>
+                <option value="Approved" id="t_filterApproved">Approved</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th id="t_thStudent">Student</th>
+                <th id="t_thDocType2">Type</th>
+                <th id="t_thFile2">File</th>
+                <th id="t_thVersion2">Version</th>
+                <th id="t_thStatus2">Status</th>
+                <th id="t_thComment2">Comment</th>
+                <th id="t_thUploadDate2">Upload Date</th>
+                <th id="t_thActions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="supervisorTableBody"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section id="journalView" class="hidden">
+      <article class="card">
+        <div class="card-head split">
+          <div>
+            <h3 id="t_journalTitle">Research Workspace</h3>
+            <p class="muted" id="t_journalSubtitle">Tasks, chapters, timeline, references, and research recommendations.</p>
+          </div>
+          <button id="journalBackBtn" class="btn btn-ghost" type="button">Return</button>
+        </div>
+        <div class="workspace-tabs" role="tablist">
+          <button class="workspace-tab active" type="button" data-ws-tab="tasks" id="t_wsTabTasks">Task Board</button>
+          <button class="workspace-tab" type="button" data-ws-tab="chapters" id="t_wsTabChapters">Chapters</button>
+          <button class="workspace-tab" type="button" data-ws-tab="gantt" id="t_wsTabGantt">Timeline</button>
+          <button class="workspace-tab" type="button" data-ws-tab="refs" id="t_wsTabRefs">References</button>
+          <button class="workspace-tab" type="button" data-ws-tab="tips" id="t_wsTabTips">Recommendations</button>
+        </div>
+      </article>
+
+      <div id="wsTasksPanel" class="workspace-panel">
+        <article class="card mt">
+          <h4>Task Board (Kanban)</h4>
+          <form id="taskForm" class="file-picker-row mt">
+            <input id="taskInput" type="text" placeholder="New task..." />
+            <button id="taskAddBtn" class="btn btn-primary small" type="submit">Add</button>
+          </form>
+          <div id="taskBoard" class="grid two-cols mt"></div>
+        </article>
+      </div>
+
+      <div id="wsChaptersPanel" class="workspace-panel hidden">
+        <article class="card mt">
+          <h4>Chapter Progress Tracker</h4>
+          <p class="muted small" style="margin-top:8px;">Track how far each chapter has progressed.</p>
+          <div class="stack mt" id="chapterProgressWrap"></div>
+        </article>
+      </div>
+
+      <div id="wsGanttPanel" class="workspace-panel hidden">
+        <article class="card mt">
+          <h4>Research Gantt Chart</h4>
+          <form id="ganttForm" class="file-picker-row mt">
+            <input id="ganttNameInput" type="text" placeholder="Milestone name" maxlength="80" />
+            <input id="ganttDateInput" type="date" />
+            <button id="ganttAddBtn" class="btn btn-primary small" type="submit">Add Milestone</button>
+          </form>
+          <div id="ganttChart" class="mt"></div>
+        </article>
+      </div>
+
+      <div id="wsRefsPanel" class="workspace-panel hidden">
+        <article class="card mt">
+          <h4>Reference Manager</h4>
+          <form id="refForm" class="stack mt">
+            <input id="refTitle" type="text" placeholder="Paper title" maxlength="200" required />
+            <input id="refDoi" type="text" placeholder="DOI (optional)" maxlength="120" />
+            <input id="refUrl" type="url" placeholder="URL (optional)" maxlength="300" />
+            <textarea id="refNotes" rows="2" placeholder="Citation notes"></textarea>
+            <button id="refSaveBtn" class="btn btn-primary small" type="submit">Save Reference</button>
+          </form>
+          <div id="refList" class="mt"></div>
+        </article>
+      </div>
+
+      <div id="wsTipsPanel" class="workspace-panel hidden">
+        <article class="card mt">
+          <h4>Smart Research Recommendations</h4>
+          <div id="recommendList" class="stack mt"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="notificationsView" class="hidden">
+      <article class="card">
+        <div class="card-head split">
+          <div><h3 id="t_notifTitle">Notification Center</h3><p class="muted" id="t_notifSubtitle">Status updates, feedback, defense changes, and announcements.</p></div>
+          <button id="notifBackBtn" class="btn btn-ghost" type="button">Return</button>
+        </div>
+        <div id="notifList"></div>
+        <button id="notifMarkAllBtn" class="btn btn-ghost small mt" type="button">Mark all as read</button>
+      </article>
+    </section>
+
+    <section id="messagesView" class="hidden">
+      <article class="card">
+        <div class="card-head split">
+          <div><h3 id="t_messagesTitle">Messages</h3><p class="muted" id="t_messagesSubtitle">Direct student–supervisor messaging.</p></div>
+          <button id="messagesBackBtn" class="btn btn-ghost" type="button">Return</button>
+        </div>
+        <div id="messageThread" class="message-thread"></div>
+        <form id="messageForm" class="file-picker-row">
+          <input id="messageInput" type="text" placeholder="Type a message..." maxlength="2000" required />
+          <button id="messageSendBtn" class="btn btn-primary small" type="submit">Send</button>
+        </form>
+      </article>
+    </section>
+
+    <section id="compareView" class="hidden">
+      <article class="card">
+        <div class="card-head split">
+          <div><h3 id="t_compareTitle">Version Comparison</h3><p class="muted" id="t_compareSubtitle">Compare two submission versions side by side.</p></div>
+          <button id="compareBackBtn" class="btn btn-ghost" type="button">Return</button>
+        </div>
+        <div class="file-picker-row mt">
+          <label>Version A <select id="compareSelectA"></select></label>
+          <label>Version B <select id="compareSelectB"></select></label>
+          <button id="compareRunBtn" class="btn btn-primary small" type="button">Compare</button>
+        </div>
+        <div id="compareResult" class="compare-grid mt"></div>
+      </article>
+    </section>
+
+    <section id="calendarView" class="hidden">
+      <article class="card">
+        <div class="card-head split">
+          <div><h3 id="t_calendarTitle">Academic Calendar</h3><p class="muted" id="t_calendarSubtitle">Deadlines, meetings, and defense schedules.</p></div>
+          <button id="calendarBackBtn" class="btn btn-ghost" type="button">Return</button>
+        </div>
+        <div id="calendarList" class="calendar-list mt"></div>
+      </article>
+    </section>
+
+    <section id="supervisorDetailsView" class="hidden">
+      <article class="card">
+        <div class="card-head split">
+          <div>
+            <h3 id="t_supervisorContactsTitle">Supervisor Contacts</h3>
+            <p class="muted" id="t_supervisorContactsSubtitle">Contact your supervisors directly.</p>
+          </div>
+          <button id="supervisorDetailsBackBtn" class="btn btn-ghost" type="button">Return</button>
+        </div>
+        <div id="supervisorContactsList" class="muted" style="margin-top:10px; line-height:1.7;"></div>
+      </article>
+    </section>
+
+    <section id="featuresView" class="hidden">
+      <article class="card">
+        <div class="card-head split">
+          <div>
+            <h3 id="t_featuresTitle">Academic Tools</h3>
+            <p class="muted" id="t_featuresSubtitle">Supporting tools for dissertation research and academic administration.</p>
+          </div>
+          <button id="featuresBackBtn" class="btn btn-ghost" type="button">Return</button>
+        </div>
+      </article>
+
+      <article class="card mt">
+        <h4>Announcements</h4>
+        <form id="announceForm" class="stack mt">
+          <input id="announceTitle" type="text" placeholder="Announcement title" />
+          <textarea id="announceBody" rows="3" placeholder="Announcement text"></textarea>
+          <button id="announcePostBtn" class="btn btn-primary small" type="submit">Post Announcement</button>
+        </form>
+        <div id="announceList" class="stack mt"></div>
+      </article>
+
+      <article class="card mt">
+        <h4>Office Hours Booking</h4>
+        <form id="meetingForm" class="stack mt">
+          <input id="meetingDate" type="datetime-local" />
+          <input id="meetingTopic" type="text" placeholder="Meeting topic" />
+          <button id="meetingBookBtn" class="btn btn-primary small" type="submit">Book Meeting</button>
+        </form>
+        <div id="meetingList" class="stack mt"></div>
+      </article>
+
+      <article class="card mt">
+        <h4 class="feature-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Defense Schedule
+        </h4>
+        <form id="defenseForm" class="stack mt">
+          <input id="defenseDate" type="datetime-local" />
+          <input id="defenseRoom" type="text" placeholder="Room / Link" />
+          <button id="defenseSaveBtn" class="btn btn-primary small" type="submit">Save Defense Schedule</button>
+        </form>
+        <div id="defenseView" class="muted mt"></div>
+      </article>
+
+      <article class="card mt">
+        <h4 class="feature-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Dissertation Writing Checklist
+        </h4>
+        <p class="muted small" style="margin-top:8px;">Paste draft text to verify essential dissertation sections are present.</p>
+        <label for="checklistText" class="mt"><span class="sr-only">Draft text</span>
+          <textarea id="checklistText" rows="4" placeholder="Paste your draft text for section review"></textarea>
+        </label>
+        <button id="runChecklistBtn" class="btn btn-ghost small mt" type="button">Run Checklist</button>
+        <div id="checklistResult" class="muted mt" role="status"></div>
+      </article>
+
+      <article class="card mt">
+        <h4 class="feature-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Plagiarism Self-Assessment
+        </h4>
+        <p class="muted small" style="margin-top:8px;">Record your external plagiarism report results for academic compliance tracking.</p>
+        <form id="plagForm" class="stack mt" novalidate>
+          <label for="plagReportName">Report Reference
+            <input id="plagReportName" type="text" placeholder="e.g. Turnitin report ID" maxlength="120" required />
+          </label>
+          <label for="plagSimilarity">Similarity Percentage
+            <input id="plagSimilarity" type="number" min="0" max="100" placeholder="0–100" required />
+          </label>
+          <button id="plagSaveBtn" class="btn btn-primary small" type="submit">Save Assessment</button>
+        </form>
+        <div id="plagView" class="muted mt"></div>
+      </article>
+
+      <article class="card mt">
+        <h4 class="feature-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Academic Calendar
+        </h4>
+        <div id="featuresCalendarList" class="calendar-list mt"></div>
+      </article>
+
+      <article class="card mt">
+        <h4 class="feature-section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Notification Preferences
+        </h4>
+        <div class="stack mt">
+          <label><input id="notifEmail" type="checkbox" /> Email notifications</label>
+          <label><input id="notifWhatsapp" type="checkbox" /> WhatsApp notifications</label>
+          <label><input id="notifInApp" type="checkbox" /> In-app notifications</label>
+          <button id="notifSaveBtn" class="btn btn-primary small" type="button">Save Preferences</button>
+        </div>
+      </article>
+      <div id="reportPrintArea" class="report-print-area cert-print-area hidden" aria-hidden="true"></div>
+    </section>
+
+    <section id="aboutView" class="hidden">
+      <article class="card">
+        <div class="card-head">
+          <div>
+            <h3 id="t_aboutTitle">About Us</h3>
+            <p class="muted" id="t_aboutSubtitle" style="margin-top:6px;">Who built this system</p>
+          </div>
+          <button id="aboutBackBtn" class="btn btn-ghost" type="button">Return</button>
+        </div>
+
+        <div class="grid" style="gap:12px;">
+          <div class="card" style="background:#0f1b34;">
+            <h4 id="t_teamTitle">Team Feshata</h4>
+            <p class="muted" id="t_teamBody" style="margin-top:8px; line-height:1.7;">
+              Team Feshata develops academic management solutions that support postgraduate research workflows at universities.
+            </p>
+          </div>
+
+          <div class="card" style="background:#0f1b34;">
+            <h4 id="t_membersTitle">Team members</h4>
+            <ul class="muted" style="margin:8px 0 0; line-height:1.85; padding-left:1.25rem;">
+              <li>Ibrahim Ali</li>
+              <li>Ibrahim Abdelmagid</li>
+              <li>Youssef Ahmed</li>
+              <li>Mohamed Saleh</li>
+              <li>Mohamed Abdelmahmoud</li>
+              <li>Mohamed Abubaker</li>
+            </ul>
+          </div>
+
+          <div class="card" style="background:#0f1b34;">
+            <h4 id="t_humbleTitle">Our Commitment</h4>
+            <p class="muted" id="t_humbleBody" style="margin-top:8px; line-height:1.7;">
+              This platform is maintained with a commitment to academic integrity and continuous improvement. We welcome feedback from students and faculty.
+            </p>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <p id="t_footer">© 2026 Team Feshata. All rights reserved.</p>
+      <button id="aboutLink" class="footer-link" type="button"><span id="t_aboutLink">About Us</span></button>
+    </div>
+  </footer>
+
+  <script>
+    const STORAGE_USERS_KEY = "pg_users_v2";
+    const STORAGE_DISSERTATIONS_KEY = "pg_dissertations_v2";
+    const STORAGE_SESSION_KEY = "pg_session_v2";
+    const STORAGE_LANG_KEY = "pg_lang_v1";
+    const STORAGE_JOURNAL_KEY = "pg_journal_v1";
+    const STORAGE_FEATURES_KEY = "pg_features_v1";
+    const DEFAULT_DEADLINE = "2026-12-31T23:59:59";
+
+    const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+    const ALLOWED_EXTENSIONS = ["pdf", "docx"];
+    const DOC_TYPES = ["proposal", "literature_review", "methodology", "results", "references", "final_dissertation"];
+    const DOC_TYPE_LABELS = {
+      proposal: "Proposal",
+      literature_review: "Literature Review",
+      methodology: "Methodology",
+      results: "Results",
+      references: "References",
+      final_dissertation: "Final Dissertation"
+    };
+
+    const el = {
+      landingView: document.getElementById("landingView"),
+      landingLoginBtn: document.getElementById("landingLoginBtn"),
+      landingRegisterBtn: document.getElementById("landingRegisterBtn"),
+      loginBackBtn: document.getElementById("loginBackBtn"),
+      loginForm: document.getElementById("loginForm"),
+      loginView: document.getElementById("loginView"),
+      signupView: document.getElementById("signupView"),
+      signupForm: document.getElementById("signupForm"),
+      studentView: document.getElementById("studentView"),
+      supervisorDetailsView: document.getElementById("supervisorDetailsView"),
+      featuresView: document.getElementById("featuresView"),
+      supervisorView: document.getElementById("supervisorView"),
+      journalView: document.getElementById("journalView"),
+      aboutView: document.getElementById("aboutView"),
+      role: document.getElementById("role"),
+      name: document.getElementById("name"),
+      password: document.getElementById("password"),
+      signupRole: document.getElementById("signupRole"),
+      signupName: document.getElementById("signupName"),
+      signupEmail: document.getElementById("signupEmail"),
+      signupPhone: document.getElementById("signupPhone"),
+      signupPassword: document.getElementById("signupPassword"),
+      signupConfirmPassword: document.getElementById("signupConfirmPassword"),
+      signupBackBtn: document.getElementById("signupBackBtn"),
+      logoutBtn: document.getElementById("logoutBtn"),
+      uploadForm: document.getElementById("uploadForm"),
+      uploadBtn: document.getElementById("uploadBtn"),
+      projectFile: document.getElementById("projectFile"),
+      browseFileBtn: document.getElementById("browseFileBtn"),
+      fileNameDisplay: document.getElementById("fileNameDisplay"),
+      uploadProgressWrap: document.getElementById("uploadProgressWrap"),
+      uploadProgressFill: document.getElementById("uploadProgressFill"),
+      uploadProgressText: document.getElementById("uploadProgressText"),
+      uploadFileError: document.getElementById("uploadFileError"),
+      registerBtn: document.getElementById("registerBtn"),
+      studentBadge: document.getElementById("studentBadge"),
+      supervisorSummary: document.getElementById("supervisorSummary"),
+      certPrintArea: document.getElementById("certPrintArea"),
+      studentTableBody: document.getElementById("studentTableBody"),
+      supervisorContactsList: document.getElementById("supervisorContactsList"),
+      openSupervisorDetailsBtn: document.getElementById("openSupervisorDetailsBtn"),
+      supervisorDetailsBackBtn: document.getElementById("supervisorDetailsBackBtn"),
+      featuresBtn: document.getElementById("featuresBtn"),
+      featuresBackBtn: document.getElementById("featuresBackBtn"),
+      supervisorTableBody: document.getElementById("supervisorTableBody"),
+      statusFilter: document.getElementById("statusFilter"),
+      journalBtn: document.getElementById("journalBtn"),
+      journalBackBtn: document.getElementById("journalBackBtn"),
+      deadlineInfo: document.getElementById("deadlineInfo"),
+      toast: document.getElementById("toast"),
+      totalCount: document.getElementById("totalCount"),
+      pendingCount: document.getElementById("pendingCount"),
+      revisionCount: document.getElementById("revisionCount"),
+      approvedCount: document.getElementById("approvedCount"),
+      resetWorkBtn: document.getElementById("resetWorkBtn"),
+      studentWorkflow: document.getElementById("studentWorkflow"),
+      docTypeSelect: document.getElementById("docTypeSelect"),
+      openCompareBtn: document.getElementById("openCompareBtn"),
+      openCalendarBtn: document.getElementById("openCalendarBtn"),
+      downloadReportBtn: document.getElementById("downloadReportBtn"),
+      notifBtn: document.getElementById("notifBtn"),
+      notifBadge: document.getElementById("notifBadge"),
+      messagesBtn: document.getElementById("messagesBtn"),
+      msgBadge: document.getElementById("msgBadge"),
+      notificationsView: document.getElementById("notificationsView"),
+      notifList: document.getElementById("notifList"),
+      notifBackBtn: document.getElementById("notifBackBtn"),
+      notifMarkAllBtn: document.getElementById("notifMarkAllBtn"),
+      messagesView: document.getElementById("messagesView"),
+      messageThread: document.getElementById("messageThread"),
+      messageForm: document.getElementById("messageForm"),
+      messageInput: document.getElementById("messageInput"),
+      messageSendBtn: document.getElementById("messageSendBtn"),
+      messagesBackBtn: document.getElementById("messagesBackBtn"),
+      compareView: document.getElementById("compareView"),
+      compareSelectA: document.getElementById("compareSelectA"),
+      compareSelectB: document.getElementById("compareSelectB"),
+      compareRunBtn: document.getElementById("compareRunBtn"),
+      compareResult: document.getElementById("compareResult"),
+      compareBackBtn: document.getElementById("compareBackBtn"),
+      calendarView: document.getElementById("calendarView"),
+      calendarList: document.getElementById("calendarList"),
+      calendarBackBtn: document.getElementById("calendarBackBtn"),
+      featuresCalendarList: document.getElementById("featuresCalendarList"),
+      supervisorAnalytics: document.getElementById("supervisorAnalytics"),
+      supervisorChartWrap: document.getElementById("supervisorChartWrap"),
+      ganttForm: document.getElementById("ganttForm"),
+      ganttNameInput: document.getElementById("ganttNameInput"),
+      ganttDateInput: document.getElementById("ganttDateInput"),
+      ganttChart: document.getElementById("ganttChart"),
+      refForm: document.getElementById("refForm"),
+      refTitle: document.getElementById("refTitle"),
+      refDoi: document.getElementById("refDoi"),
+      refUrl: document.getElementById("refUrl"),
+      refNotes: document.getElementById("refNotes"),
+      refList: document.getElementById("refList"),
+      recommendList: document.getElementById("recommendList"),
+      reportPrintArea: document.getElementById("reportPrintArea")
+    };
+
+    el.langSelect = document.getElementById("langSelect");
+    el.themeToggleBtn = document.getElementById("themeToggleBtn");
+    el.homeBtn = document.getElementById("homeBtn");
+    el.aboutLink = document.getElementById("aboutLink");
+    el.aboutBackBtn = document.getElementById("aboutBackBtn");
+    el.announceForm = document.getElementById("announceForm");
+    el.announceTitle = document.getElementById("announceTitle");
+    el.announceBody = document.getElementById("announceBody");
+    el.announceList = document.getElementById("announceList");
+    el.meetingForm = document.getElementById("meetingForm");
+    el.meetingDate = document.getElementById("meetingDate");
+    el.meetingTopic = document.getElementById("meetingTopic");
+    el.meetingList = document.getElementById("meetingList");
+    el.defenseForm = document.getElementById("defenseForm");
+    el.defenseDate = document.getElementById("defenseDate");
+    el.defenseRoom = document.getElementById("defenseRoom");
+    el.defenseView = document.getElementById("defenseView");
+    el.checklistText = document.getElementById("checklistText");
+    el.checklistResult = document.getElementById("checklistResult");
+    el.runChecklistBtn = document.getElementById("runChecklistBtn");
+    el.plagForm = document.getElementById("plagForm");
+    el.plagReportName = document.getElementById("plagReportName");
+    el.plagSimilarity = document.getElementById("plagSimilarity");
+    el.plagView = document.getElementById("plagView");
+    el.chapterProgressWrap = document.getElementById("chapterProgressWrap");
+    el.taskForm = document.getElementById("taskForm");
+    el.taskInput = document.getElementById("taskInput");
+    el.taskBoard = document.getElementById("taskBoard");
+    el.notifEmail = document.getElementById("notifEmail");
+    el.notifWhatsapp = document.getElementById("notifWhatsapp");
+    el.notifInApp = document.getElementById("notifInApp");
+    el.notifSaveBtn = document.getElementById("notifSaveBtn");
+    el.loginNameError = document.getElementById("loginNameError");
+    el.loginPasswordError = document.getElementById("loginPasswordError");
+    el.signupNameError = document.getElementById("signupNameError");
+    el.signupEmailError = document.getElementById("signupEmailError");
+    el.signupPhoneError = document.getElementById("signupPhoneError");
+    el.signupPasswordError = document.getElementById("signupPasswordError");
+    el.signupConfirmError = document.getElementById("signupConfirmError");
+
+    const i18n = {
+      en: {
+        dir: "ltr",
+        eyebrow: "Postgraduate Portal",
+        appTitle: "Dissertation Management System",
+        logout: "Sign Out",
+        themeBtn: "Theme",
+        featuresNav: "Tools",
+        aboutLink: "About Us",
+        heroEyebrow: "Postgraduate Research Portal",
+        heroTitle: "Dissertation Management for Academic Excellence",
+        heroDesc: "A centralized platform for postgraduate students and supervisors to manage dissertation submissions, academic review, and research progress throughout the degree lifecycle.",
+        heroLoginBtn: "Sign In",
+        heroRegisterBtn: "Create Account",
+        featUploadTitle: "Dissertation Submission",
+        featUploadDesc: "Upload versioned dissertation drafts in approved formats with deadline tracking and submission history.",
+        featSupervisorTitle: "Supervisor Review",
+        featSupervisorDesc: "Supervisors review submissions, provide structured feedback, and update academic approval status.",
+        featProgressTitle: "Progress Tracking",
+        featProgressDesc: "Monitor submission status, revision cycles, and chapter completion from a unified dashboard.",
+        featWorkflowTitle: "Academic Workflow",
+        featWorkflowDesc: "Coordinate defense scheduling, office hours, announcements, and institutional research procedures.",
+        loginTitle: "Sign In",
+        loginSubtitle: "Enter your credentials to access the postgraduate dissertation portal.",
+        loginBackBtn: "Back to Home",
+        signupTitle: "Create Account",
+        signupSubtitle: "Register with your academic details to access the dissertation management portal.",
+        passwordHint: "At least 8 characters with letters and numbers.",
+        signupRoleLabel: "Role",
+        signupRoleStudent: "Student",
+        signupRoleSupervisor: "Supervisor",
+        signupNameLabel: "Full Name",
+        signupNamePh: "Enter full name",
+        signupEmailLabel: "Email",
+        signupEmailPh: "Enter email",
+        signupPhoneLabel: "Phone Number",
+        signupPhonePh: "Enter phone number",
+        signupPasswordLabel: "Password",
+        signupPasswordPh: "Create password",
+        signupConfirmPasswordLabel: "Confirm Password",
+        signupConfirmPasswordPh: "Re-enter password",
+        signupSubmitBtn: "Create Account",
+        signupBackBtn: "Back to Login",
+        roleLabel: "Role",
+        roleStudent: "Student",
+        roleSupervisor: "Supervisor",
+        nameLabel: "Username",
+        namePh: "Enter your username",
+        passwordLabel: "Password",
+        passwordPh: "Enter your password",
+        loginBtn: "Sign In",
+        registerBtn: "Create Account",
+        journalNav: "Workspace",
+        journalTitle: "Research Workspace",
+        journalSubtitle: "Tasks, chapters, timeline, references, and research recommendations.",
+        journalEntryTitle: "Entry title",
+        journalEntryBody: "Entry details",
+        journalTitlePh: "Weekly progress",
+        journalBodyPh: "Write your notes, blockers, and next steps...",
+        journalSave: "Save entry",
+        journalMyEntries: "My Journal Entries",
+        journalSearchPh: "Search journal...",
+        journalFilterAll: "All time",
+        journalFilterToday: "Today",
+        journalFilter7d: "Last 7 days",
+        journalEmpty: "No journal entries yet.",
+        journalDelete: "Delete",
+        journalBack: "Return",
+        uploadTitle: "Upload New Version",
+        uploadSubtitle: "Submit a new dissertation version in PDF or DOCX format. Maximum file size: 25 MB.",
+        fileLabel: "Dissertation File",
+        filePh: "e.g. thesis_v2.pdf",
+        browseFile: "Choose File",
+        noFileChosen: "No file selected",
+        uploadProgress: "Uploading…",
+        uploadComplete: "Upload complete",
+        toastFileTypeInvalid: "Only PDF and DOCX files are accepted.",
+        toastFileTooLarge: "File exceeds the 25 MB size limit.",
+        supervisorAttachHint: "Optional attachment (picker)",
+        openFile: "Open file",
+        toastFileMissing: "No saved file to open. Upload again in this browser.",
+        toastPopupBlocked: "Allow pop-ups to open the file in a new tab.",
+        toastFileOpenFailed: "Could not open the file.",
+        uploadBtn: "Upload",
+        progressTitle: "My Progress",
+        feedbackHistory: "Feedback history",
+        noSubmissions: "No submissions yet",
+        noSubmissionsDesc: "Upload your first dissertation version to begin the review process.",
+        emptySupervisor: "No submissions to review",
+        emptySupervisorDesc: "Student submissions will appear here once uploaded.",
+        total: "Total",
+        pending: "Pending",
+        needsRevision: "Needs Revision",
+        approved: "Approved",
+        supervisorContactsTitle: "Supervisor Contacts",
+        supervisorContactsSubtitle: "Contact your supervisors directly.",
+        viewSupervisorDetailsBtn: "View Supervisor Details",
+        supervisorDetailsBackBtn: "Return",
+        contactEmail: "Email",
+        contactPhone: "Phone",
+        contactEmailBtn: "Email",
+        contactCallBtn: "Call",
+        contactWhatsappBtn: "WhatsApp",
+        contactCopyEmailBtn: "Copy Email",
+        contactCopyPhoneBtn: "Copy Phone",
+        contactGmailBtn: "Open in Gmail",
+        toastCopied: "Copied.",
+        noSupervisorContacts: "No supervisor contacts available yet.",
+        mySubmissions: "My Submissions",
+        resetWorkBtn: "Reset all my work",
+        resetWorkConfirm: "Delete all your submissions and stored files from this browser? Supervisors will no longer see them here. This cannot be undone.",
+        resetWorkDone: "All your submissions and stored files were removed.",
+        resetWorkEmpty: "You have no submissions to remove.",
+        thFile: "File",
+        thVersion: "Version",
+        thStatus: "Status",
+        thComment: "Comment",
+        thUploadDate: "Upload Date",
+        allSubmissions: "All Submissions",
+        allSubtitle: "Review submissions, provide feedback, and update academic status.",
+        summaryTotal: "Total",
+        summaryPending: "Pending",
+        summaryReview: "Under Review",
+        summaryRevision: "Revision Required",
+        summaryApproved: "Approved",
+        filterLabel: "Filter",
+        thStudent: "Student",
+        thActions: "Actions",
+        reviewPh: "Write feedback...",
+        save: "Save",
+        all: "All",
+        underReview: "Under Review",
+        statusPending: "Pending",
+        statusUnderReview: "Under Review",
+        statusNeedsRevision: "Needs Revision",
+        statusApproved: "Approved",
+        unknown: "unknown",
+        toastMissingCreds: "Enter username and password.",
+        toastLoginOk: "Logged in successfully.",
+        toastRegisterOk: "Account created. You can log in now.",
+        toastUserExists: "This username already exists for that role.",
+        toastNotRegistered: "This account is not registered yet. Press Register first.",
+        toastRedirectSignup: "Account not found. Please complete sign up first.",
+        toastInvalidCreds: "Invalid username or password.",
+        toastSignupMissing: "Please complete all sign up fields.",
+        toastSignupEmailInvalid: "Please enter a valid email address.",
+        toastSignupPhoneInvalid: "Please enter a valid phone number.",
+        toastSignupPasswordWeak: "Password must be at least 8 characters and include letters and numbers.",
+        toastSignupPasswordMismatch: "Passwords do not match.",
+        toastEmailExists: "This email is already registered.",
+        deadlineLabel: "Submission deadline",
+        deadlinePassed: "Deadline passed",
+        deadlineRemaining: "Time left",
+        lateTag: "Late",
+        toastJournalSaved: "Journal entry saved.",
+        toastJournalDeleted: "Journal entry deleted.",
+        toastJournalNeedLogin: "Log in first to use Journal.",
+        toastUploadOk: "Dissertation uploaded successfully.",
+        toastUploadFailed: "Upload failed. Please try again.",
+        toastNotifSaved: "Notification preferences saved.",
+        toastArchiveOn: "Archive mode enabled.",
+        toastArchiveOff: "Archive mode disabled.",
+        toastArchiveReadonly: "Archive mode is active. Changes are read-only.",
+        toastUpdated: "Submission updated successfully.",
+        toastLoggedOut: "Logged out.",
+        badgeStudent: "Student",
+        badgeSupervisor: "Supervisor",
+        overview: "Overview",
+        versions: "Versions",
+        footer: "© 2026 Team Feshata. All rights reserved.",
+        aboutTitle: "About Us",
+        aboutSubtitle: "The team behind this platform",
+        aboutBack: "Return to Dashboard",
+        teamTitle: "Team Feshata",
+        teamBody: "Team Feshata develops academic management solutions that support postgraduate research workflows at universities.",
+        membersTitle: "Team Members",
+        humbleTitle: "Our Commitment",
+        humbleBody: "This platform is maintained with a commitment to academic integrity and continuous improvement. We welcome feedback from students and faculty.",
+        docTypeLabel: "Document Type",
+        docType_proposal: "Proposal",
+        docType_literature_review: "Literature Review",
+        docType_methodology: "Methodology",
+        docType_results: "Results",
+        docType_references: "References",
+        docType_final_dissertation: "Final Dissertation",
+        compareVersionsBtn: "Compare Versions",
+        academicCalendarBtn: "Academic Calendar",
+        downloadReportBtnLabel: "Download Report",
+        wsTabTasks: "Task Board",
+        wsTabChapters: "Chapters",
+        wsTabGantt: "Timeline",
+        wsTabRefs: "References",
+        wsTabTips: "Recommendations",
+        contactMessageBtn: "Message",
+        messagesTitle: "Messages",
+        messagesSubtitle: "Direct student–supervisor messaging.",
+        messagesWith: "Conversation with",
+        messageInputPh: "Type a message...",
+        messageSendBtn: "Send",
+        noSupervisorForMessage: "No supervisor available.",
+        noMessagesYet: "No messages yet. Start the conversation.",
+        notifTitle: "Notification Center",
+        notifSubtitle: "Status updates, feedback, defense changes, and announcements.",
+        notifMarkAll: "Mark all as read",
+        compareTitle: "Version Comparison",
+        compareSubtitle: "Compare two submission versions side by side.",
+        compareRunBtn: "Compare",
+        compareBackBtn: "Return",
+        calendarTitle: "Academic Calendar",
+        calendarSubtitle: "Deadlines, meetings, and defense schedules.",
+        thDocType: "Type",
+        thDocType2: "Type",
+        featuresTitle: "Academic Tools",
+        featuresSubtitle: "Supporting tools for dissertation research and academic administration.",
+        featuresBackBtn: "Return",
+        signupBackBtnLabel: "Back to Sign In"
+      },
+      ar: {
+        dir: "rtl",
+        eyebrow: "بوابة الدراسات العليا",
+        appTitle: "نظام الرسائل",
+        logout: "تسجيل خروج",
+        loginTitle: "تسجيل الدخول",
+        loginSubtitle: "سجّل الدخول بحسابك أو أنشئ حسابًا جديدًا.",
+        signupTitle: "إنشاء حساب",
+        signupSubtitle: "املأ جميع البيانات لإنشاء حسابك.",
+        signupRoleLabel: "الدور",
+        signupRoleStudent: "طالب",
+        signupRoleSupervisor: "مشرف",
+        signupNameLabel: "الاسم الكامل",
+        signupNamePh: "اكتب الاسم الكامل",
+        signupEmailLabel: "البريد الإلكتروني",
+        signupEmailPh: "اكتب البريد الإلكتروني",
+        signupPhoneLabel: "رقم الهاتف",
+        signupPhonePh: "اكتب رقم الهاتف",
+        signupPasswordLabel: "كلمة المرور",
+        signupPasswordPh: "أنشئ كلمة مرور",
+        signupConfirmPasswordLabel: "تأكيد كلمة المرور",
+        signupConfirmPasswordPh: "أعد كتابة كلمة المرور",
+        signupSubmitBtn: "إنشاء حساب",
+        signupBackBtn: "العودة لتسجيل الدخول",
+        roleLabel: "الدور",
+        roleStudent: "طالب",
+        roleSupervisor: "مشرف",
+        nameLabel: "الاسم",
+        namePh: "اكتب اسمك",
+        passwordLabel: "كلمة المرور",
+        passwordPh: "اكتب كلمة المرور",
+        loginBtn: "دخول",
+        guestBtn: "تخطي كضيف",
+        registerBtn: "تسجيل جديد",
+        uploadTitle: "رفع نسخة جديدة",
+        uploadSubtitle: "ارفع نسخة جديدة من الرسالة (أي نوع ملف). الحالة تبدأ (قيد الانتظار).",
+        fileLabel: "ملف الرسالة",
+        filePh: "مثال: thesis_v2.pdf",
+        browseFile: "اختيار ملف",
+        noFileChosen: "لم يتم اختيار ملف",
+        supervisorAttachHint: "مرفق اختياري",
+        openFile: "فتح الملف",
+        toastFileMissing: "لا يوجد ملف محفوظ. ارفع من جديد في هذا المتصفح.",
+        toastPopupBlocked: "اسمح بالنوافذ المنبثقة لفتح الملف.",
+        toastFileOpenFailed: "تعذر فتح الملف.",
+        uploadBtn: "رفع",
+        guestReadOnly: "وضع الضيف للعرض فقط. سجل كطالب لرفع الملفات.",
+        progressTitle: "التقدم",
+        total: "الإجمالي",
+        pending: "قيد الانتظار",
+        needsRevision: "يحتاج تعديل",
+        approved: "معتمد",
+        supervisorContactsTitle: "بيانات المشرفين",
+        supervisorContactsSubtitle: "تواصل مع المشرفين مباشرة.",
+        viewSupervisorDetailsBtn: "عرض بيانات المشرفين",
+        supervisorDetailsBackBtn: "رجوع",
+        contactEmail: "البريد الإلكتروني",
+        contactPhone: "رقم الهاتف",
+        contactEmailBtn: "إيميل",
+        contactCallBtn: "اتصال",
+        contactWhatsappBtn: "واتساب",
+        contactCopyEmailBtn: "نسخ الإيميل",
+        contactCopyPhoneBtn: "نسخ الهاتف",
+        contactGmailBtn: "فتح في Gmail",
+        toastCopied: "تم النسخ.",
+        noSupervisorContacts: "لا توجد بيانات تواصل للمشرفين حتى الآن.",
+        mySubmissions: "ملفاتي المرفوعة",
+        resetWorkBtn: "مسح كل عملي",
+        resetWorkConfirm: "حذف كل تسليماتك والملفات المخزنة في هذا المتصفح؟ لن يراها المشرفون هنا. لا يمكن التراجع.",
+        resetWorkDone: "تمت إزالة كل تسليماتك والملفات المخزنة.",
+        resetWorkEmpty: "لا توجد تسليمات لحذفها.",
+        resetWorkGuest: "الضيف لا يمكنه المسح. سجّل كطالب.",
+        thFile: "الملف",
+        thVersion: "النسخة",
+        thStatus: "الحالة",
+        thComment: "تعليق",
+        thUploadDate: "تاريخ الرفع",
+        allSubmissions: "كل الملفات",
+        allSubtitle: "راجع الملفات وأضف تعليق وحدّث الحالة.",
+        filterLabel: "فلترة",
+        thStudent: "الطالب",
+        thActions: "إجراءات",
+        reviewPh: "اكتب ملاحظاتك...",
+        save: "حفظ",
+        all: "الكل",
+        underReview: "تحت المراجعة",
+        statusPending: "قيد الانتظار",
+        statusUnderReview: "تحت المراجعة",
+        statusNeedsRevision: "يحتاج تعديل",
+        statusApproved: "معتمد",
+        unknown: "غير معروف",
+        toastMissingCreds: "اكتب اسم المستخدم وكلمة المرور.",
+        toastLoginOk: "تم تسجيل الدخول بنجاح.",
+        toastRegisterOk: "تم إنشاء الحساب. يمكنك تسجيل الدخول الآن.",
+        toastUserExists: "اسم المستخدم موجود بالفعل لهذا الدور.",
+        toastNotRegistered: "هذا الحساب غير مسجل بعد. اضغط تسجيل جديد أولاً.",
+        toastRedirectSignup: "الحساب غير موجود. أكمل إنشاء الحساب أولاً.",
+        toastInvalidCreds: "اسم المستخدم أو كلمة المرور غير صحيحة.",
+        toastSignupMissing: "يرجى تعبئة جميع حقول إنشاء الحساب.",
+        toastSignupEmailInvalid: "يرجى إدخال بريد إلكتروني صحيح.",
+        toastSignupPhoneInvalid: "يرجى إدخال رقم هاتف صحيح.",
+        toastSignupPasswordWeak: "كلمة المرور يجب أن تكون 6 أحرف على الأقل.",
+        toastSignupPasswordMismatch: "كلمتا المرور غير متطابقتين.",
+        toastEmailExists: "هذا البريد الإلكتروني مسجل بالفعل.",
+        deadlineLabel: "موعد التسليم النهائي",
+        deadlinePassed: "انتهى الموعد النهائي",
+        deadlineRemaining: "الوقت المتبقي",
+        lateTag: "متأخر",
+        toastGuestOn: "تم تفعيل وضع الضيف.",
+        toastGuestRO: "وضع الضيف للعرض فقط.",
+        toastUploadOk: "تم رفع الملف بنجاح.",
+        toastUpdated: "تم تحديث الملف بنجاح.",
+        toastLoggedOut: "تم تسجيل الخروج.",
+        badgeGuest: "ضيف (عرض فقط)",
+        badgeStudent: "طالب",
+        overview: "نظرة عامة",
+        versions: "الإصدارات",
+        footer: "© 2026 Team Feshata. جميع الحقوق محفوظة.",
+        aboutTitle: "من نحن",
+        aboutSubtitle: "من قام ببناء هذا النظام",
+        aboutBack: "العودة للداشبورد",
+        teamTitle: "فريق feshata",
+        teamBody: "نحن فريق طلابي صغير شغوف ببناء أنظمة عملية تسهّل الإجراءات الجامعية وتُنظم سير العمل.",
+        membersTitle: "أعضاء الفريق",
+        humbleTitle: "كلمة تواضع",
+        humbleBody: "بنينا هذا المشروع بروح التعلم والعمل الجماعي. إذا لاحظت أي مشكلة، يسعدنا استقبال ملاحظاتك وسنواصل التطوير.",
+        themeBtn: "المظهر",
+        featuresNav: "الأدوات",
+        journalNav: "مساحة العمل",
+        journalTitle: "مساحة البحث",
+        journalSubtitle: "المهام والفصول والجدول الزمني والمراجع والتوصيات.",
+        journalBack: "رجوع",
+        aboutLink: "من نحن",
+        passwordHint: "8 أحرف على الأقل مع أحرف وأرقام.",
+        loginBackBtn: "العودة للرئيسية",
+        heroEyebrow: "بوابة البحث للدراسات العليا",
+        heroTitle: "إدارة الرسائل للتميز الأكاديمي",
+        heroDesc: "منصة موحدة للطلاب والمشرفين لإدارة تسليمات الرسائل والمراجعة الأكاديمية وتقدم البحث.",
+        heroLoginBtn: "تسجيل الدخول",
+        heroRegisterBtn: "إنشاء حساب",
+        featUploadTitle: "تسليم الرسالة",
+        featUploadDesc: "رفع مسودات الرسالة بإصدارات متعددة مع تتبع المواعيد وسجل التسليم.",
+        featSupervisorTitle: "مراجعة المشرف",
+        featSupervisorDesc: "مراجعة التسليمات وتقديم ملاحظات وتحديث حالة الاعتماد.",
+        featProgressTitle: "تتبع التقدم",
+        featProgressDesc: "متابعة حالة التسليم ودورات التعديل وإنجاز الفصول.",
+        featWorkflowTitle: "سير العمل الأكاديمي",
+        featWorkflowDesc: "تنسيق المناقشة والاجتماعات والإعلانات والإجراءات البحثية.",
+        appTitle: "نظام إدارة الرسائل",
+        docTypeLabel: "نوع المستند",
+        docType_proposal: "المقترح",
+        docType_literature_review: "مراجعة الأدبيات",
+        docType_methodology: "المنهجية",
+        docType_results: "النتائج",
+        docType_references: "المراجع",
+        docType_final_dissertation: "الرسالة النهائية",
+        compareVersionsBtn: "مقارنة الإصدارات",
+        academicCalendarBtn: "التقويم الأكاديمي",
+        downloadReportBtnLabel: "تنزيل التقرير",
+        wsTabTasks: "لوحة المهام",
+        wsTabChapters: "الفصول",
+        wsTabGantt: "الجدول الزمني",
+        wsTabRefs: "المراجع",
+        wsTabTips: "التوصيات",
+        contactMessageBtn: "رسالة",
+        messagesTitle: "الرسائل",
+        messagesSubtitle: "مراسلة مباشرة بين الطالب والمشرف.",
+        messagesWith: "محادثة مع",
+        messageInputPh: "اكتب رسالة...",
+        messageSendBtn: "إرسال",
+        noSupervisorForMessage: "لا يوجد مشرف متاح.",
+        noMessagesYet: "لا توجد رسائل بعد. ابدأ المحادثة.",
+        notifTitle: "مركز الإشعارات",
+        notifSubtitle: "تحديثات الحالة والملاحظات والمناقشة والإعلانات.",
+        notifMarkAll: "تعليم الكل كمقروء",
+        compareTitle: "مقارنة الإصدارات",
+        compareSubtitle: "قارن بين نسختين من التسليم.",
+        compareRunBtn: "قارن",
+        compareBackBtn: "رجوع",
+        calendarTitle: "التقويم الأكاديمي",
+        calendarSubtitle: "المواعيد النهائية والاجتماعات وجدول المناقشة.",
+        thDocType: "النوع",
+        thDocType2: "النوع",
+        noSubmissions: "لا توجد تسليمات بعد",
+        noSubmissionsDesc: "ارفع أول نسخة من رسالتك لبدء المراجعة.",
+        emptySupervisor: "لا توجد تسليمات للمراجعة",
+        emptySupervisorDesc: "ستظهر تسليمات الطلاب هنا بعد الرفع.",
+        summaryTotal: "الإجمالي",
+        summaryPending: "قيد الانتظار",
+        summaryReview: "تحت المراجعة",
+        summaryRevision: "يحتاج تعديل",
+        summaryApproved: "معتمد",
+        feedbackHistory: "سجل الملاحظات",
+        uploadProgress: "جاري الرفع…",
+        uploadComplete: "اكتمل الرفع",
+        toastFileTypeInvalid: "يُقبل PDF و DOCX فقط.",
+        toastFileTooLarge: "الملف يتجاوز حد 25 ميجابايت.",
+        toastUploadFailed: "فشل الرفع. حاول مرة أخرى.",
+        toastNotifSaved: "تم حفظ تفضيلات الإشعارات.",
+        featuresTitle: "الأدوات الأكاديمية",
+        featuresSubtitle: "أدوات داعمة لبحث الرسالة والإدارة الأكاديمية.",
+        featuresBackBtn: "رجوع",
+        signupBackBtnLabel: "العودة لتسجيل الدخول"
+      },
+      ta: {
+        dir: "ltr",
+        eyebrow: "மேற்படிப்பு போர்டல்",
+        appTitle: "ஆய்வுக்கட்டுரை அமைப்பு",
+        logout: "வெளியேறு",
+        loginTitle: "உள்நுழை",
+        loginSubtitle: "உங்கள் கணக்கில் உள்நுழையவும் அல்லது புதிய கணக்கை உருவாக்கவும்.",
+        signupTitle: "கணக்கு உருவாக்கு",
+        signupSubtitle: "உங்கள் கணக்கை உருவாக்க அனைத்து விவரங்களையும் நிரப்பவும்.",
+        signupRoleLabel: "பாத்திரம்",
+        signupRoleStudent: "மாணவர்",
+        signupRoleSupervisor: "மேற்பார்வையாளர்",
+        signupNameLabel: "முழு பெயர்",
+        signupNamePh: "முழு பெயரை உள்ளிடவும்",
+        signupEmailLabel: "மின்னஞ்சல்",
+        signupEmailPh: "மின்னஞ்சலை உள்ளிடவும்",
+        signupPhoneLabel: "தொலைபேசி எண்",
+        signupPhonePh: "தொலைபேசி எண்ணை உள்ளிடவும்",
+        signupPasswordLabel: "கடவுச்சொல்",
+        signupPasswordPh: "கடவுச்சொல் உருவாக்கவும்",
+        signupConfirmPasswordLabel: "கடவுச்சொல் உறுதிப்படுத்து",
+        signupConfirmPasswordPh: "கடவுச்சொல்லை மீண்டும் உள்ளிடவும்",
+        signupSubmitBtn: "கணக்கு உருவாக்கு",
+        signupBackBtn: "உள்நுழை பக்கத்துக்கு திரும்பு",
+        roleLabel: "பாத்திரம்",
+        roleStudent: "மாணவர்",
+        roleSupervisor: "மேற்பார்வையாளர்",
+        nameLabel: "பெயர்",
+        namePh: "உங்கள் பெயரை உள்ளிடுங்கள்",
+        passwordLabel: "கடவுச்சொல்",
+        passwordPh: "கடவுச்சொல்லை உள்ளிடுங்கள்",
+        loginBtn: "உள்நுழை",
+        guestBtn: "விருந்தினராக தொடரவும்",
+        registerBtn: "பதிவு செய்",
+        uploadTitle: "புதிய பதிப்பு பதிவேற்றம்",
+        uploadSubtitle: "ஆய்வுக்கட்டுரையின் புதிய பதிப்பை பதிவேற்றவும் (எந்த கோப்பு வகையும்). நிலை Pending ஆக தொடங்கும்.",
+        fileLabel: "ஆய்வுக்கட்டுரை கோப்பு",
+        filePh: "எ.கா: thesis_v2.pdf",
+        browseFile: "கோப்பைத் தேர்வு",
+        noFileChosen: "கோப்பு தேர்வு செய்யப்படவில்லை",
+        supervisorAttachHint: "விருப்ப கோப்பு",
+        openFile: "கோப்பைத் திற",
+        toastFileMissing: "சேமித்த கோப்பு இல்லை. இந்த உலாவியில் மீண்டும் பதிவேற்றவும்.",
+        toastPopupBlocked: "புதிய தாவலில் திறக்க மேல்மட்டங்களை அனுமதிக்கவும்.",
+        toastFileOpenFailed: "கோப்பைத் திறக்க முடியவில்லை.",
+        uploadBtn: "பதிவேற்றம்",
+        guestReadOnly: "விருந்தினர் முறை வாசிப்பிற்கு மட்டும். பதிவேற்ற மாணவராக உள்நுழையவும்.",
+        progressTitle: "என் முன்னேற்றம்",
+        total: "மொத்தம்",
+        pending: "Pending",
+        needsRevision: "திருத்தம் தேவை",
+        approved: "அங்கீகரிக்கப்பட்டது",
+        supervisorContactsTitle: "மேற்பார்வையாளர் தொடர்புகள்",
+        supervisorContactsSubtitle: "உங்கள் மேற்பார்வையாளர்களை நேரடியாக தொடர்பு கொள்ளுங்கள்.",
+        viewSupervisorDetailsBtn: "மேற்பார்வையாளர் விவரங்களை காட்டு",
+        supervisorDetailsBackBtn: "திரும்பு",
+        contactEmail: "மின்னஞ்சல்",
+        contactPhone: "தொலைபேசி",
+        contactEmailBtn: "மின்னஞ்சல்",
+        contactCallBtn: "அழை",
+        contactWhatsappBtn: "வாட்ஸ்அப்",
+        contactCopyEmailBtn: "மின்னஞ்சலை நகலெடு",
+        contactCopyPhoneBtn: "தொலைபேசியை நகலெடு",
+        contactGmailBtn: "Gmail-ல் திற",
+        toastCopied: "நகலெடுக்கப்பட்டது.",
+        noSupervisorContacts: "இன்னும் மேற்பார்வையாளர் தொடர்பு தகவல் இல்லை.",
+        mySubmissions: "என் சமர்ப்பிப்புகள்",
+        resetWorkBtn: "என் வேலையை மீட்டமை",
+        resetWorkConfirm: "இந்த உலாவியில் உங்கள் எல்லா சமர்ப்பிப்புகளும் சேமித்த கோப்புகளும் நீக்கப்படும். மேற்பார்வையாளர்கள் இனி அவற்றை இங்கே காண மாட்டார்கள். திரும்ப முடியாது.",
+        resetWorkDone: "உங்கள் சமர்ப்பிப்புகளும் சேமித்த கோப்புகளும் நீக்கப்பட்டன.",
+        resetWorkEmpty: "நீக்க சமர்ப்பிப்புகள் இல்லை.",
+        resetWorkGuest: "விருந்தினர் மீட்டமைக்க முடியாது. மாணவராக உள்நுழையவும்.",
+        thFile: "கோப்பு",
+        thVersion: "பதிப்பு",
+        thStatus: "நிலை",
+        thComment: "கருத்து",
+        thUploadDate: "பதிவேற்ற தேதி",
+        allSubmissions: "அனைத்து சமர்ப்பிப்புகள்",
+        allSubtitle: "மதிப்பாய்வு செய்து கருத்து/நிலையை புதுப்பிக்கவும்.",
+        filterLabel: "வடிகட்டி",
+        thStudent: "மாணவர்",
+        thActions: "செயல்கள்",
+        reviewPh: "கருத்துகளை எழுதுங்கள்...",
+        save: "சேமி",
+        all: "அனைத்தும்",
+        underReview: "மதிப்பாய்வில்",
+        statusPending: "நிலுவையில்",
+        statusUnderReview: "மதிப்பாய்வில்",
+        statusNeedsRevision: "திருத்தம் தேவை",
+        statusApproved: "அங்கீகரிக்கப்பட்டது",
+        unknown: "தெரியாது",
+        toastMissingCreds: "பயனர் பெயரும் கடவுச்சொல்லும் உள்ளிடுங்கள்.",
+        toastLoginOk: "வெற்றிகரமாக உள்நுழைந்தது.",
+        toastRegisterOk: "கணக்கு உருவாக்கப்பட்டது. இப்போது உள்நுழையலாம்.",
+        toastUserExists: "இந்த பாத்திரத்திற்கான பயனர் பெயர் ஏற்கனவே உள்ளது.",
+        toastNotRegistered: "இந்த கணக்கு இன்னும் பதிவு செய்யப்படவில்லை. முதலில் பதிவு செய் அழுத்தவும்.",
+        toastRedirectSignup: "கணக்கு கிடைக்கவில்லை. முதலில் பதிவு முடிக்கவும்.",
+        toastInvalidCreds: "பயனர் பெயர் அல்லது கடவுச்சொல் தவறு.",
+        toastSignupMissing: "பதிவு படிவத்தின் அனைத்து புலங்களையும் நிரப்பவும்.",
+        toastSignupEmailInvalid: "சரியான மின்னஞ்சலை உள்ளிடவும்.",
+        toastSignupPhoneInvalid: "சரியான தொலைபேசி எண்ணை உள்ளிடவும்.",
+        toastSignupPasswordWeak: "கடவுச்சொல் குறைந்தது 6 எழுத்துகள் இருக்க வேண்டும்.",
+        toastSignupPasswordMismatch: "இரு கடவுச்சொற்களும் பொருந்தவில்லை.",
+        toastEmailExists: "இந்த மின்னஞ்சல் ஏற்கனவே பதிவு செய்யப்பட்டுள்ளது.",
+        deadlineLabel: "சமர்ப்பிப்பு கடைசி தேதி",
+        deadlinePassed: "கடைசி தேதி கடந்துவிட்டது",
+        deadlineRemaining: "மீதமுள்ள நேரம்",
+        lateTag: "தாமதம்",
+        toastGuestOn: "விருந்தினர் முறை இயக்கு.",
+        toastGuestRO: "விருந்தினர் முறை வாசிப்பிற்கு மட்டும்.",
+        toastUploadOk: "கோப்பு பதிவேற்றம் வெற்றி.",
+        toastUpdated: "சமர்ப்பிப்பு புதுப்பிக்கப்பட்டது.",
+        toastLoggedOut: "வெளியேறியது.",
+        badgeGuest: "விருந்தினர் (வாசிப்பு மட்டும்)",
+        badgeStudent: "மாணவர்",
+        overview: "சுருக்கம்",
+        versions: "பதிப்புகள்",
+        footer: "© 2026 Team Feshata. அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.",
+        aboutTitle: "எங்களை பற்றி",
+        aboutSubtitle: "இந்த அமைப்பை உருவாக்கியது யார்",
+        aboutBack: "டாஷ்போர்டுக்கு திரும்பு",
+        teamTitle: "Team feshata",
+        teamBody: "பல்கலைக்கழக செயல்முறைகளை எளிமைப்படுத்தும் நடைமுறை அமைப்புகளை உருவாக்க ஆர்வமுள்ள சிறிய மாணவர் குழு நாங்கள்.",
+        membersTitle: "குழு உறுப்பினர்கள்",
+        humbleTitle: "ஒரு தாழ்மையான வார்த்தை",
+        humbleBody: "கற்றலும் குழு பணியும் மதிப்புடன் இந்த திட்டத்தை உருவாக்கினோம். ஏதேனும் பிழைகள் இருந்தால், உங்கள் கருத்துகளை வரவேற்கிறோம்; மேலும் மேம்படுத்துவோம்.",
+        themeBtn: "தீம்",
+        featuresNav: "கருவிகள்",
+        journalNav: "பணியிடம்",
+        journalTitle: "ஆராய்ச்சி பணியிடம்",
+        journalSubtitle: "பணிகள், அத்தியாயங்கள், காலவரிசை, மேற்கோள்கள் மற்றும் பரிந்துரைகள்.",
+        journalBack: "திரும்பு",
+        aboutLink: "எங்களை பற்றி",
+        passwordHint: "குறைந்தது 8 எழுத்துகள், எழுத்துகள் மற்றும் எண்கள்.",
+        loginBackBtn: "முகப்புக்கு திரும்பு",
+        heroEyebrow: "மேற்படிப்பு ஆராய்ச்சி போர்டல்",
+        heroTitle: "கல்வி சிறப்புக்கான ஆய்வுக்கட்டுரை மேலாண்மை",
+        heroDesc: "மாணவர்களும் மேற்பார்வையாளர்களும் சமர்ப்பிப்புகள், மதிப்பாய்வு மற்றும் ஆராய்ச்சி முன்னேற்றத்தை நிர்வகிக்க ஒருங்கிணைந்த தளம்.",
+        heroLoginBtn: "உள்நுழை",
+        heroRegisterBtn: "கணக்கு உருவாக்கு",
+        featUploadTitle: "ஆய்வுக்கட்டுரை சமர்ப்பிப்பு",
+        featUploadDesc: "அனுமதிக்கப்பட்ட வடிவங்களில் பதிப்பு சமர்ப்பிப்புகளை பதிவேற்றவும்.",
+        featSupervisorTitle: "மேற்பார்வையாளர் மதிப்பாய்வு",
+        featSupervisorDesc: "சமர்ப்பிப்புகளை மதிப்பாய்வு செய்து கருத்து வழங்கவும்.",
+        featProgressTitle: "முன்னேற்ற கண்காணிப்பு",
+        featProgressDesc: "நிலை, திருத்த சுழற்சிகள் மற்றும் அத்தியாய முன்னேற்றத்தை கண்காணிக்கவும்.",
+        featWorkflowTitle: "கல்வி பணிப்பாய்வு",
+        featWorkflowDesc: "விவாத அட்டவணை, சந்திப்புகள் மற்றும் அறிவிப்புகளை ஒருங்கிணைக்கவும்.",
+        docTypeLabel: "ஆவண வகை",
+        docType_proposal: "முன்மொழிவு",
+        docType_literature_review: "இலக்கிய ஆய்வு",
+        docType_methodology: "முறையியல்",
+        docType_results: "முடிவுகள்",
+        docType_references: "மேற்கோள்கள்",
+        docType_final_dissertation: "இறுதி ஆய்வுக்கட்டுரை",
+        compareVersionsBtn: "பதிப்புகளை ஒப்பிடு",
+        academicCalendarBtn: "கல்வி நாட்காட்டி",
+        downloadReportBtnLabel: "அறிக்கை பதிவிறக்கம்",
+        wsTabTasks: "பணி பலகை",
+        wsTabChapters: "அத்தியாயங்கள்",
+        wsTabGantt: "காலவரிசை",
+        wsTabRefs: "மேற்கோள்கள்",
+        wsTabTips: "பரிந்துரைகள்",
+        contactMessageBtn: "செய்தி",
+        messagesTitle: "செய்திகள்",
+        messagesSubtitle: "மாணவர்–மேற்பார்வையாளர் நேரடி செய்தியிடல்.",
+        messagesWith: "உரையாடல் —",
+        messageInputPh: "தங்கள் செய்தியை இங்கே தட்டச்சு செய்யவும்...",
+        messageSendBtn: "அனுப்பு",
+        noSupervisorForMessage: "மேற்பார்வையாளர் இல்லை.",
+        noMessagesYet: "இன்னும் செய்திகள் இல்லை. உரையாடலைத் தொடங்குங்கள்.",
+        notifTitle: "அறிவிப்பு மையம்",
+        notifSubtitle: "நிலை மாற்றங்கள், கருத்து, விவாதம் மற்றும் அறிவிப்புகள்.",
+        notifMarkAll: "அனைத்தையும் படித்ததாக குறி",
+        compareTitle: "பதிப்பு ஒப்பீடு",
+        compareSubtitle: "இரண்டு சமர்ப்பிப்பு பதிப்புகளை ஒப்பிடுங்கள்.",
+        compareRunBtn: "ஒப்பிடு",
+        compareBackBtn: "திரும்பு",
+        calendarTitle: "கல்வி நாட்காட்டி",
+        calendarSubtitle: "காலக்கெடுக்கள், சந்திப்புகள் மற்றும் விவாத அட்டவணை.",
+        thDocType: "வகை",
+        thDocType2: "வகை",
+        noSubmissions: "இன்னும் சமர்ப்பிப்புகள் இல்லை",
+        noSubmissionsDesc: "மதிப்பாய்வைத் தொடங்க முதல் பதிப்பை பதிவேற்றவும்.",
+        emptySupervisor: "மதிப்பாய்வு செய்ய சமர்ப்பிப்புகள் இல்லை",
+        emptySupervisorDesc: "மாணவர்கள் பதிவேற்றிய பின் இங்கே தோன்றும்.",
+        summaryTotal: "மொத்தம்",
+        summaryPending: "நிலுவையில்",
+        summaryReview: "மதிப்பாய்வில்",
+        summaryRevision: "திருத்தம் தேவை",
+        summaryApproved: "அங்கீகரிக்கப்பட்டது",
+        feedbackHistory: "கருத்து வரலாறு",
+        uploadProgress: "பதிவேற்றுகிறது…",
+        uploadComplete: "பதிவேற்றம் முடிந்தது",
+        toastFileTypeInvalid: "PDF மற்றும் DOCX மட்டுமே.",
+        toastFileTooLarge: "கோப்பு 25 MB வரம்பை மீறுகிறது.",
+        toastUploadFailed: "பதிவேற்றம் தோல்வி. மீண்டும் முயற்சிக்கவும்.",
+        toastNotifSaved: "அறிவிப்பு விருப்பங்கள் சேமிக்கப்பட்டன.",
+        featuresTitle: "கல்வி கருவிகள்",
+        featuresSubtitle: "ஆய்வுக்கட்டுரை மற்றும் நிர்வாகத்திற்கான கருவிகள்.",
+        featuresBackBtn: "திரும்பு",
+        signupBackBtnLabel: "உள்நுழை பக்கத்துக்கு திரும்பு"
+      }
+    };
+
+    function langPack(lang) {
+      return { ...i18n.en, ...(i18n[lang] || {}) };
+    }
+
+    let currentLang = readJSON(STORAGE_LANG_KEY, "en");
+    if (!i18n[currentLang]) currentLang = "en";
+
+    /** Updates the label next to the student file picker (chosen name or “No file chosen”). */
+    function updateStudentFileDisplay() {
+      const t = langPack(currentLang);
+      if (!el.fileNameDisplay || !el.projectFile) return;
+      const f = el.projectFile.files[0];
+      el.fileNameDisplay.textContent = f ? f.name : t.noFileChosen;
+    }
+
+    function applyLanguage(lang) {
+      if (!i18n[lang]) return;
+      currentLang = lang;
+      saveJSON(STORAGE_LANG_KEY, currentLang);
+      if (el.langSelect) el.langSelect.value = currentLang;
+
+      const t = langPack(lang);
+      document.documentElement.lang = lang === "ar" ? "ar" : (lang === "ta" ? "ta" : "en");
+      document.documentElement.dir = t.dir;
+
+      const setText = (id, value) => { const node = document.getElementById(id); if (node) node.textContent = value; };
+      setText("t_eyebrow", t.eyebrow);
+      setText("t_appTitle", t.appTitle);
+      setText("t_logoutBtn", t.logout);
+      setText("t_loginTitle", t.loginTitle);
+      setText("t_loginSubtitle", t.loginSubtitle);
+      setText("t_signupTitle", t.signupTitle || i18n.en.signupTitle);
+      setText("t_signupSubtitle", t.signupSubtitle || i18n.en.signupSubtitle);
+      setText("t_signupRoleLabel", t.signupRoleLabel || i18n.en.signupRoleLabel);
+      setText("t_signupRoleStudent", t.signupRoleStudent || i18n.en.signupRoleStudent);
+      setText("t_signupRoleSupervisor", t.signupRoleSupervisor || i18n.en.signupRoleSupervisor);
+      setText("t_signupNameLabel", t.signupNameLabel || i18n.en.signupNameLabel);
+      setText("t_signupEmailLabel", t.signupEmailLabel || i18n.en.signupEmailLabel);
+      setText("t_signupPhoneLabel", t.signupPhoneLabel || i18n.en.signupPhoneLabel);
+      setText("t_signupPasswordLabel", t.signupPasswordLabel || i18n.en.signupPasswordLabel);
+      setText("t_signupConfirmPasswordLabel", t.signupConfirmPasswordLabel || i18n.en.signupConfirmPasswordLabel);
+      setText("t_signupSubmitBtn", t.signupSubmitBtn || i18n.en.signupSubmitBtn);
+      setText("t_roleLabel", t.roleLabel);
+      setText("t_roleStudent", t.roleStudent);
+      setText("t_roleSupervisor", t.roleSupervisor);
+      setText("t_journalNav", t.journalNav);
+      setText("t_nameLabel", t.nameLabel);
+      setText("t_passwordLabel", t.passwordLabel);
+      setText("t_loginBtn", t.loginBtn);
+      el.registerBtn.textContent = t.registerBtn || "Register";
+      if (el.loginBackBtn) el.loginBackBtn.textContent = t.loginBackBtn || i18n.en.loginBackBtn;
+      setText("t_heroEyebrow", t.heroEyebrow || i18n.en.heroEyebrow);
+      setText("t_heroTitle", t.heroTitle || i18n.en.heroTitle);
+      setText("t_heroDesc", t.heroDesc || i18n.en.heroDesc);
+      setText("t_heroLoginBtn", t.heroLoginBtn || i18n.en.heroLoginBtn);
+      setText("t_heroRegisterBtn", t.heroRegisterBtn || i18n.en.heroRegisterBtn);
+      setText("t_featUploadTitle", t.featUploadTitle || i18n.en.featUploadTitle);
+      setText("t_featUploadDesc", t.featUploadDesc || i18n.en.featUploadDesc);
+      setText("t_featSupervisorTitle", t.featSupervisorTitle || i18n.en.featSupervisorTitle);
+      setText("t_featSupervisorDesc", t.featSupervisorDesc || i18n.en.featSupervisorDesc);
+      setText("t_featProgressTitle", t.featProgressTitle || i18n.en.featProgressTitle);
+      setText("t_featProgressDesc", t.featProgressDesc || i18n.en.featProgressDesc);
+      setText("t_featWorkflowTitle", t.featWorkflowTitle || i18n.en.featWorkflowTitle);
+      setText("t_featWorkflowDesc", t.featWorkflowDesc || i18n.en.featWorkflowDesc);
+      setText("t_themeBtn", t.themeBtn || i18n.en.themeBtn);
+      setText("t_featuresNav", t.featuresNav);
+      setText("t_aboutLink", t.aboutLink);
+      setText("t_passwordHint", t.passwordHint || i18n.en.passwordHint);
+      setText("t_uploadTitle", t.uploadTitle);
+      setText("t_uploadSubtitle", t.uploadSubtitle);
+      setText("t_fileLabel", t.fileLabel);
+      const uploadBtnLabel = el.uploadBtn?.querySelector("span");
+      if (uploadBtnLabel) uploadBtnLabel.textContent = t.uploadBtn;
+      const browseLabel = document.getElementById("t_browseFile");
+      if (browseLabel) browseLabel.textContent = t.browseFile;
+      setText("t_progressTitle", t.progressTitle);
+      setText("t_totalLabel", t.total);
+      setText("t_pendingLabel", t.pending);
+      setText("t_revisionLabel", t.needsRevision);
+      setText("t_approvedLabel", t.approved);
+      setText("t_supervisorContactsTitle", t.supervisorContactsTitle || i18n.en.supervisorContactsTitle);
+      setText("t_supervisorContactsSubtitle", t.supervisorContactsSubtitle || i18n.en.supervisorContactsSubtitle);
+      if (el.openSupervisorDetailsBtn) el.openSupervisorDetailsBtn.textContent = t.viewSupervisorDetailsBtn || i18n.en.viewSupervisorDetailsBtn;
+      if (el.supervisorDetailsBackBtn) el.supervisorDetailsBackBtn.textContent = t.supervisorDetailsBackBtn || i18n.en.supervisorDetailsBackBtn;
+      setText("t_mySubmissions", t.mySubmissions);
+      if (el.resetWorkBtn) el.resetWorkBtn.textContent = t.resetWorkBtn;
+      setText("t_thFile", t.thFile);
+      setText("t_thVersion", t.thVersion);
+      setText("t_thStatus", t.thStatus);
+      setText("t_thComment", t.thComment);
+      setText("t_thUploadDate", t.thUploadDate);
+      setText("t_allSubmissions", t.allSubmissions);
+      setText("t_allSubtitle", t.allSubtitle);
+      setText("t_filterLabel", t.filterLabel);
+      setText("t_thStudent", t.thStudent);
+      setText("t_thFile2", t.thFile);
+      setText("t_thVersion2", t.thVersion);
+      setText("t_thStatus2", t.thStatus);
+      setText("t_thComment2", t.thComment);
+      setText("t_thUploadDate2", t.thUploadDate);
+      setText("t_thActions", t.thActions);
+      setText("t_overviewBadge", t.overview);
+      setText("t_versionsBadge", t.versions);
+      setText("t_filterAll", t.all);
+      setText("t_filterPending", t.statusPending);
+      setText("t_filterUnderReview", t.statusUnderReview);
+      setText("t_filterNeedsRevision", t.statusNeedsRevision);
+      setText("t_filterApproved", t.statusApproved);
+      setText("t_aboutTitle", t.aboutTitle);
+      setText("t_aboutSubtitle", t.aboutSubtitle);
+      setText("t_teamTitle", t.teamTitle);
+      setText("t_teamBody", t.teamBody);
+      setText("t_membersTitle", t.membersTitle);
+      setText("t_humbleTitle", t.humbleTitle);
+      setText("t_humbleBody", t.humbleBody);
+      setText("t_docTypeLabel", t.docTypeLabel);
+      if (el.docTypeSelect) {
+        DOC_TYPES.forEach((dt) => {
+          const opt = el.docTypeSelect.querySelector(`option[value="${dt}"]`);
+          if (opt) opt.textContent = t[`docType_${dt}`] || DOC_TYPE_LABELS[dt];
+        });
+      }
+      if (el.openCompareBtn) el.openCompareBtn.textContent = t.compareVersionsBtn;
+      if (el.openCalendarBtn) el.openCalendarBtn.textContent = t.academicCalendarBtn;
+      if (el.downloadReportBtn) el.downloadReportBtn.textContent = t.downloadReportBtnLabel;
+      setText("t_wsTabTasks", t.wsTabTasks);
+      setText("t_wsTabChapters", t.wsTabChapters);
+      setText("t_wsTabGantt", t.wsTabGantt);
+      setText("t_wsTabRefs", t.wsTabRefs);
+      setText("t_wsTabTips", t.wsTabTips);
+      setText("t_thDocType", t.thDocType);
+      setText("t_thDocType2", t.thDocType2);
+      setText("t_messagesTitle", t.messagesTitle);
+      updateMessagesSubtitle();
+      if (el.messageInput) el.messageInput.placeholder = t.messageInputPh;
+      if (el.messageSendBtn) el.messageSendBtn.textContent = t.messageSendBtn;
+      if (el.messagesBackBtn) el.messagesBackBtn.textContent = t.compareBackBtn;
+      setText("t_notifTitle", t.notifTitle);
+      setText("t_notifSubtitle", t.notifSubtitle);
+      if (el.notifMarkAllBtn) el.notifMarkAllBtn.textContent = t.notifMarkAll;
+      if (el.notifBackBtn) el.notifBackBtn.textContent = t.compareBackBtn;
+      setText("t_compareTitle", t.compareTitle);
+      setText("t_compareSubtitle", t.compareSubtitle);
+      if (el.compareRunBtn) el.compareRunBtn.textContent = t.compareRunBtn;
+      if (el.compareBackBtn) el.compareBackBtn.textContent = t.compareBackBtn;
+      setText("t_calendarTitle", t.calendarTitle);
+      setText("t_calendarSubtitle", t.calendarSubtitle);
+      if (el.calendarBackBtn) el.calendarBackBtn.textContent = t.compareBackBtn;
+      setText("t_featuresTitle", t.featuresTitle);
+      setText("t_featuresSubtitle", t.featuresSubtitle);
+      if (el.featuresBackBtn) el.featuresBackBtn.textContent = t.featuresBackBtn;
+      setText("t_journalTitle", t.journalTitle);
+      setText("t_journalSubtitle", t.journalSubtitle || i18n.en.journalSubtitle);
+      if (el.journalBackBtn) el.journalBackBtn.textContent = t.journalBack || i18n.en.journalBack;
+      if (el.aboutBackBtn) el.aboutBackBtn.textContent = t.aboutBack;
+      const footer = document.getElementById("t_footer");
+      if (footer) footer.textContent = t.footer;
+
+      el.name.placeholder = t.namePh;
+      el.password.placeholder = t.passwordPh;
+      if (el.signupName) el.signupName.placeholder = t.signupNamePh || i18n.en.signupNamePh;
+      if (el.signupEmail) el.signupEmail.placeholder = t.signupEmailPh || i18n.en.signupEmailPh;
+      if (el.signupPhone) el.signupPhone.placeholder = t.signupPhonePh || i18n.en.signupPhonePh;
+      if (el.signupPassword) el.signupPassword.placeholder = t.signupPasswordPh || i18n.en.signupPasswordPh;
+      if (el.signupConfirmPassword) el.signupConfirmPassword.placeholder = t.signupConfirmPasswordPh || i18n.en.signupConfirmPasswordPh;
+      if (el.signupBackBtn) el.signupBackBtn.textContent = t.signupBackBtn || i18n.en.signupBackBtn;
+      updateStudentFileDisplay();
+      updateDeadlineInfo();
+
+      // Update dynamic placeholders inside supervisor table (if visible)
+      renderSupervisorTable();
+
+      // Update badge text if student view is open
+      if (currentUser && currentUser.role === "student") {
+        el.studentBadge.textContent = t.badgeStudent;
+        renderSupervisorContacts();
+        renderStudentTable();
+        renderStudentWorkflow();
+      }
+      if (currentUser && !el.messagesView.classList.contains("hidden")) renderMessages();
+    }
+
+    function updateMessagesSubtitle() {
+      const t = langPack(currentLang);
+      const subEl = document.getElementById("t_messagesSubtitle");
+      if (!subEl) return;
+      if (currentUser?.role === "student" && messageTargetSupervisorId) {
+        const sup = (users.supervisors || []).find((s) => Number(s.id) === Number(messageTargetSupervisorId));
+        subEl.textContent = sup ? `${t.messagesWith} ${sup.name}` : t.messagesSubtitle;
+      } else {
+        subEl.textContent = t.messagesSubtitle;
+      }
+    }
+
+    function readJSON(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function saveJSON(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function migrateLegacyStorage() {
+      const hasUsers = readJSON(STORAGE_USERS_KEY, null);
+      if (!hasUsers || (!hasUsers.students?.length && !hasUsers.supervisors?.length)) {
+        const legacyUsers = readJSON("pg_users", null);
+        if (legacyUsers && (legacyUsers.students?.length || legacyUsers.supervisors?.length)) {
+          saveJSON(STORAGE_USERS_KEY, legacyUsers);
+        }
+      }
+      const hasDissertations = readJSON(STORAGE_DISSERTATIONS_KEY, null);
+      if (!Array.isArray(hasDissertations) || !hasDissertations.length) {
+        const legacyDissertations = readJSON("pg_dissertations", null);
+        if (Array.isArray(legacyDissertations) && legacyDissertations.length) {
+          saveJSON(STORAGE_DISSERTATIONS_KEY, legacyDissertations);
+        }
+      }
+    }
+    migrateLegacyStorage();
+
+    let users = readJSON(STORAGE_USERS_KEY, { students: [], supervisors: [] });
+    let dissertations = readJSON(STORAGE_DISSERTATIONS_KEY, []);
+    let currentUser = readJSON(STORAGE_SESSION_KEY, null);
+    let messageTargetSupervisorId = null;
+    let journalEntries = readJSON(STORAGE_JOURNAL_KEY, []);
+    let featuresData = readJSON(STORAGE_FEATURES_KEY, {
+      announcements: [],
+      meetings: [],
+      defense: null,
+      plagiarism: {},
+      chapterProgress: {},
+      tasks: [],
+      notifications: {},
+      certificates: [],
+      archiveMode: false,
+      theme: "dark",
+      inAppNotifications: [],
+      messages: [],
+      activityLog: [],
+      references: {},
+      gantt: {}
+    });
+
+    featuresData.inAppNotifications = Array.isArray(featuresData.inAppNotifications) ? featuresData.inAppNotifications : [];
+    featuresData.messages = Array.isArray(featuresData.messages) ? featuresData.messages : [];
+    featuresData.activityLog = Array.isArray(featuresData.activityLog) ? featuresData.activityLog : [];
+    featuresData.references = featuresData.references || {};
+    featuresData.gantt = featuresData.gantt || {};
+
+    featuresData.announcements = Array.isArray(featuresData.announcements) ? featuresData.announcements : [];
+    featuresData.meetings = Array.isArray(featuresData.meetings) ? featuresData.meetings : [];
+    featuresData.plagiarism = featuresData.plagiarism || {};
+    featuresData.chapterProgress = featuresData.chapterProgress || {};
+    featuresData.tasks = Array.isArray(featuresData.tasks) ? featuresData.tasks : [];
+    featuresData.notifications = featuresData.notifications || {};
+    featuresData.certificates = Array.isArray(featuresData.certificates) ? featuresData.certificates : [];
+    if (typeof featuresData.archiveMode !== "boolean") featuresData.archiveMode = false;
+    if (!featuresData.theme) featuresData.theme = "dark";
+
+    /** localStorage can deserialize ids as strings; IndexedDB keys must match numbers used on save. */
+    function normalizeStoredData() {
+      if (!Array.isArray(users.students)) users.students = [];
+      if (!Array.isArray(users.supervisors)) users.supervisors = [];
+      ["students", "supervisors"].forEach((k) => {
+        const pool = users[k];
+        pool.forEach((u) => {
+          u.id = Number(u.id);
+        });
+      });
+      dissertations.forEach((d) => {
+        d.id = Number(d.id);
+        d.studentId = Number(d.studentId);
+        if (d.version != null) d.version = Number(d.version);
+        if (!d.docType) d.docType = "final_dissertation";
+      });
+      if (currentUser && currentUser.id != null) {
+        currentUser.id = Number(currentUser.id);
+      }
+    }
+    normalizeStoredData();
+
+    function statusClass(status) {
+      const map = { "Pending":"pending", "Under Review":"under-review", "Needs Revision":"needs-revision", "Approved":"approved" };
+      return map[status] || "pending";
+    }
+
+    function statusText(status) {
+      const t = langPack(currentLang);
+      const map = {
+        "Pending": t.statusPending,
+        "Under Review": t.statusUnderReview,
+        "Needs Revision": t.statusNeedsRevision,
+        "Approved": t.statusApproved
+      };
+      return map[status] || status;
+    }
+
+    function showToast(message, type = "info") {
+      el.toast.textContent = message;
+      el.toast.classList.remove("hidden", "toast--success", "toast--error");
+      if (type === "success") el.toast.classList.add("toast--success");
+      else if (type === "error") el.toast.classList.add("toast--error");
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => el.toast.classList.add("hidden"), 2800);
+    }
+
+    function setButtonLoading(btn, loading, label) {
+      if (!btn) return;
+      if (loading) {
+        if (!btn.dataset.originalHtml) btn.dataset.originalHtml = btn.innerHTML;
+        btn.classList.add("is-loading");
+        btn.disabled = true;
+        btn.innerHTML = `<span class="btn-spinner" aria-hidden="true"></span><span>${label || "Please wait…"}</span>`;
+      } else {
+        btn.classList.remove("is-loading");
+        btn.disabled = false;
+        if (btn.dataset.originalHtml) {
+          btn.innerHTML = btn.dataset.originalHtml;
+          delete btn.dataset.originalHtml;
+        }
+      }
+    }
+
+    function sanitizeText(value, maxLen = 500) {
+      return String(value || "")
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "")
+        .trim()
+        .slice(0, maxLen);
+    }
+
+    function isValidEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim());
+    }
+
+    function isStrongPassword(password) {
+      const p = String(password || "");
+      return p.length >= 8 && /[A-Za-z]/.test(p) && /\d/.test(p);
+    }
+
+    function isAllowedUploadFile(file) {
+      if (!file) return { ok: false, reason: "missing" };
+      const ext = (file.name.split(".").pop() || "").toLowerCase();
+      if (!ALLOWED_EXTENSIONS.includes(ext)) return { ok: false, reason: "type" };
+      if (file.size > MAX_UPLOAD_BYTES) return { ok: false, reason: "size" };
+      return { ok: true };
+    }
+
+    function statusBadgeHtml(status) {
+      const cls = {
+        "Pending": "status-badge--pending",
+        "Under Review": "status-badge--under-review",
+        "Needs Revision": "status-badge--needs-revision",
+        "Approved": "status-badge--approved",
+        "Rejected": "status-badge--rejected"
+      }[status] || "status-badge--pending";
+      return `<span class="status-badge ${cls}">${escapeHtml(statusText(status))}</span>`;
+    }
+
+    function renderFeedbackHistory(item) {
+      const t = langPack(currentLang);
+      const history = Array.isArray(item.feedbackHistory) ? item.feedbackHistory : [];
+      if (!history.length) return "";
+      const items = history.slice().reverse().map((h) =>
+        `<li><strong>${escapeHtml(statusText(h.status))}</strong> — ${escapeHtml(h.comment || "—")} <em>(${escapeHtml(h.date || "")})</em></li>`
+      ).join("");
+      return `<details class="feedback-history"><summary>${t.feedbackHistory || i18n.en.feedbackHistory}</summary><ul>${items}</ul></details>`;
+    }
+
+    /** IndexedDB: store File/Blob per submission so supervisors can open files in a new tab. */
+    const IDB_NAME = "pg_dissertation_blobs_v1";
+    const IDB_STORE = "files";
+    const IDB_VER = 1;
+
+    /** Guesses MIME so PDFs, images, video, audio, zip, Office docs open correctly in a new tab from a blob URL. */
+    function guessMimeFromFileName(name) {
+      const ext = (String(name).split(".").pop() || "").toLowerCase();
+      const map = {
+        pdf: "application/pdf",
+        jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", gif: "image/gif",
+        webp: "image/webp", svg: "image/svg+xml", bmp: "image/bmp", ico: "image/x-icon",
+        tif: "image/tiff", tiff: "image/tiff", avif: "image/avif", heic: "image/heic",
+        mp4: "video/mp4", webm: "video/webm", ogv: "video/ogg", mov: "video/quicktime", mkv: "video/x-matroska",
+        mp3: "audio/mpeg", wav: "audio/wav", ogg: "audio/ogg", m4a: "audio/mp4", flac: "audio/flac",
+        txt: "text/plain", csv: "text/csv", json: "application/json", xml: "application/xml",
+        html: "text/html", htm: "text/html", css: "text/css", md: "text/markdown",
+        js: "text/javascript", mjs: "text/javascript", ts: "text/plain", py: "text/plain",
+        zip: "application/zip", rar: "application/x-rar-compressed",
+        "7z": "application/x-7z-compressed", gz: "application/gzip", tar: "application/x-tar",
+        doc: "application/msword",
+        docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        xls: "application/vnd.ms-excel",
+        xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ppt: "application/vnd.ms-powerpoint",
+        pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        odt: "application/vnd.oasis.opendocument.text",
+        rtf: "application/rtf"
+      };
+      return map[ext] || "";
+    }
+
+    function openDissertationDb() {
+      if (!window.indexedDB) {
+        return Promise.reject(new Error("IndexedDB unavailable (try a normal browser window, not private mode with IDB disabled)"));
+      }
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(IDB_NAME, IDB_VER);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(IDB_STORE)) {
+            db.createObjectStore(IDB_STORE, { keyPath: "id" });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function saveDissertationFile(id, file) {
+      const numericId = Number(id);
+      const mimeType =
+        file.type && file.type !== ""
+          ? file.type
+          : guessMimeFromFileName(file.name);
+      return openDissertationDb().then((db) => new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, "readwrite");
+        const req = tx.objectStore(IDB_STORE).put({
+          id: numericId,
+          blob: file,
+          mimeType: mimeType || ""
+        });
+        req.onerror = () => reject(req.error);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error || new Error("IndexedDB write failed"));
+      }));
+    }
+
+    /** Returns { blob, mimeType } or null (mimeType may be empty for older stored rows). */
+    function getDissertationFile(id) {
+      const numericId = Number(id);
+      return openDissertationDb().then((db) => new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, "readonly");
+        const r = tx.objectStore(IDB_STORE).get(numericId);
+        r.onsuccess = () => {
+          const row = r.result;
+          if (!row || !row.blob) {
+            resolve(null);
+            return;
+          }
+          resolve({ blob: row.blob, mimeType: row.mimeType || "" });
+        };
+        r.onerror = () => reject(r.error);
+      }));
+    }
+
+    /** Removes stored file blobs for the given dissertation ids (student reset / cleanup). */
+    function deleteDissertationFilesFromIdb(ids) {
+      const unique = [...new Set(ids.map((id) => Number(id)).filter((n) => Number.isFinite(n)))];
+      if (!unique.length) return Promise.resolve();
+      if (!window.indexedDB) return Promise.resolve();
+      return openDissertationDb().then((db) => new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, "readwrite");
+        const store = tx.objectStore(IDB_STORE);
+        unique.forEach((id) => {
+          store.delete(id);
+        });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error || new Error("IndexedDB delete failed"));
+      }));
+    }
+
+    /**
+     * Opens a blob URL in a new tab (works reliably from a click handler; avoids broken window.open feature strings).
+     */
+    function openBlobUrlInNewTab(url) {
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.style.cssText = "position:fixed;left:-9999px;top:0;";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function openDissertationFileInBrowser(rawId) {
+      const t = langPack(currentLang);
+      const id = Number(rawId);
+      if (!Number.isFinite(id)) {
+        showToast(t.toastFileOpenFailed);
+        return;
+      }
+      const meta = dissertations.find((d) => Number(d.id) === id);
+      getDissertationFile(id)
+        .then((rec) => {
+          if (!rec || !rec.blob) {
+            showToast(t.toastFileMissing);
+            return;
+          }
+          let mime = rec.mimeType;
+          if (!mime || mime === "application/octet-stream") {
+            mime = guessMimeFromFileName(meta && meta.fileName) || rec.blob.type || "";
+          }
+          if (!mime) {
+            mime = "application/octet-stream";
+          }
+          const typedBlob = new Blob([rec.blob], { type: mime });
+          const url = URL.createObjectURL(typedBlob);
+          openBlobUrlInNewTab(url);
+          setTimeout(() => URL.revokeObjectURL(url), 600000);
+        })
+        .catch(() => {
+          showToast(t.toastFileOpenFailed, "error");
+        });
+    }
+
+    function nowDate() {
+      return new Date().toLocaleString();
+    }
+
+    function deadlineDate() {
+      return new Date(DEFAULT_DEADLINE);
+    }
+
+    function formatCountdown(ms) {
+      if (ms <= 0) return "00d 00h 00m";
+      const d = Math.floor(ms / (1000 * 60 * 60 * 24));
+      const h = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const m = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+      return `${String(d).padStart(2, "0")}d ${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}m`;
+    }
+
+    function updateDeadlineInfo() {
+      if (!el.deadlineInfo) return;
+      const t = langPack(currentLang);
+      const deadline = deadlineDate();
+      const remaining = deadline.getTime() - Date.now();
+      if (remaining <= 0) {
+        el.deadlineInfo.textContent = `${t.deadlineLabel || i18n.en.deadlineLabel}: ${deadline.toLocaleString()} (${t.deadlinePassed || i18n.en.deadlinePassed})`;
+      } else {
+        el.deadlineInfo.textContent = `${t.deadlineLabel || i18n.en.deadlineLabel}: ${deadline.toLocaleString()} - ${t.deadlineRemaining || i18n.en.deadlineRemaining}: ${formatCountdown(remaining)}`;
+      }
+    }
+
+    function isSubmissionLate(item) {
+      const ts = Number(item.createdAtTs || 0);
+      if (!ts) return false;
+      return ts > deadlineDate().getTime();
+    }
+
+    function docTypeLabel(type) {
+      const t = langPack(currentLang);
+      return t[`docType_${type}`] || t.docType_final_dissertation || DOC_TYPE_LABELS[type] || DOC_TYPE_LABELS.final_dissertation;
+    }
+
+    function addActivity(type, detail, userId = null) {
+      featuresData.activityLog.push({
+        id: Date.now() + Math.floor(Math.random() * 999),
+        userId: userId != null ? Number(userId) : (currentUser ? Number(currentUser.id) : null),
+        type,
+        detail: String(detail || "").slice(0, 500),
+        date: nowDate(),
+        ts: Date.now()
+      });
+      if (featuresData.activityLog.length > 200) featuresData.activityLog = featuresData.activityLog.slice(-200);
+    }
+
+    function pushInAppNotification(userId, type, message) {
+      featuresData.inAppNotifications.push({
+        id: Date.now() + Math.floor(Math.random() * 999),
+        userId: Number(userId),
+        type,
+        message: String(message || "").slice(0, 300),
+        date: nowDate(),
+        read: false
+      });
+      if (featuresData.inAppNotifications.length > 100) {
+        featuresData.inAppNotifications = featuresData.inAppNotifications.slice(-100);
+      }
+    }
+
+    function notifyAllStudents(type, message) {
+      (users.students || []).forEach((s) => pushInAppNotification(s.id, type, message));
+    }
+
+    function getUnreadNotifCount() {
+      if (!currentUser) return 0;
+      return (featuresData.inAppNotifications || []).filter((n) => Number(n.userId) === Number(currentUser.id) && !n.read).length;
+    }
+
+    function getUnreadMsgCount() {
+      if (!currentUser) return 0;
+      const uid = Number(currentUser.id);
+      return (featuresData.messages || []).filter((m) => Number(m.toUserId) === uid && !m.read).length;
+    }
+
+    function showNotificationsView() {
+      if (!currentUser) { showLoginView(); return; }
+      resetViews();
+      el.notificationsView.classList.remove("hidden");
+      renderNotifications();
+      updateNavigation();
+    }
+
+    function showMessagesView(supervisorId = null) {
+      if (!currentUser) { showLoginView(); return; }
+      messageTargetSupervisorId = supervisorId != null ? Number(supervisorId) : null;
+      resetViews();
+      el.messagesView.classList.remove("hidden");
+      const uid = Number(currentUser.id);
+      (featuresData.messages || []).forEach((m) => {
+        if (Number(m.toUserId) !== uid) return;
+        if (currentUser.role === "student" && messageTargetSupervisorId) {
+          if (Number(m.fromUserId) !== messageTargetSupervisorId) return;
+        }
+        m.read = true;
+      });
+      persistAll();
+      updateMessagesSubtitle();
+      renderMessages();
+      updateNavigation();
+    }
+
+    function showCompareView() {
+      if (!currentUser || currentUser.role !== "student") return;
+      resetViews();
+      el.compareView.classList.remove("hidden");
+      renderCompareSelectors();
+      renderCompareResult();
+      updateNavigation();
+    }
+
+    function showCalendarView() {
+      if (!currentUser) { showLoginView(); return; }
+      resetViews();
+      el.calendarView.classList.remove("hidden");
+      renderCalendarList(el.calendarList);
+      updateNavigation();
+    }
+
+    function updateNavBadges() {
+      const nc = getUnreadNotifCount();
+      const mc = getUnreadMsgCount();
+      if (el.notifBadge) {
+        el.notifBadge.textContent = String(nc);
+        el.notifBadge.classList.toggle("hidden", nc <= 0);
+      }
+      if (el.msgBadge) {
+        el.msgBadge.textContent = String(mc);
+        el.msgBadge.classList.toggle("hidden", mc <= 0);
+      }
+    }
+
+    function getCalendarEvents() {
+      const events = [];
+      events.push({ type: "Deadline", title: "Submission Deadline", date: DEFAULT_DEADLINE, sort: new Date(DEFAULT_DEADLINE).getTime() });
+      (featuresData.meetings || []).forEach((m) => {
+        if (currentUser?.role === "supervisor" || Number(m.studentId) === Number(currentUser?.id)) {
+          events.push({ type: "Meeting", title: m.topic || "Supervisor meeting", date: m.date, sort: new Date(m.date).getTime() || 0 });
+        }
+      });
+      if (featuresData.defense) {
+        events.push({ type: "Defense", title: `Defense — ${featuresData.defense.room || "TBA"}`, date: featuresData.defense.date, sort: new Date(featuresData.defense.date).getTime() || 0 });
+      }
+      return events.filter((e) => e.date).sort((a, b) => a.sort - b.sort);
+    }
+
+    function renderCalendarList(targetEl) {
+      if (!targetEl) return;
+      const events = getCalendarEvents().filter((e) => e.sort >= Date.now() - 86400000);
+      if (!events.length) {
+        targetEl.innerHTML = `<p class="muted">No upcoming events.</p>`;
+        return;
+      }
+      targetEl.innerHTML = events.map((e) => `
+        <div class="calendar-event">
+          <div class="calendar-event-type">${escapeHtml(e.type)}</div>
+          <strong>${escapeHtml(e.title)}</strong>
+          <p class="muted small" style="margin:4px 0 0;">${escapeHtml(new Date(e.date).toLocaleString())}</p>
+        </div>`).join("");
+    }
+
+    function renderActivityTimeline() {
+      if (!el.activityTimeline) return;
+      let items = (featuresData.activityLog || []).slice().sort((a, b) => Number(b.ts) - Number(a.ts));
+      if (currentUser?.role === "student") {
+        items = items.filter((a) => a.userId == null || Number(a.userId) === Number(currentUser.id));
+      }
+      if (!items.length) {
+        el.activityTimeline.innerHTML = `<p class="muted">No activity yet.</p>`;
+        return;
+      }
+      el.activityTimeline.innerHTML = items.slice(0, 25).map((a) => `
+        <div class="timeline-item">
+          <strong>${escapeHtml(a.type)}</strong>
+          <p style="margin:4px 0 0;">${escapeHtml(a.detail)}</p>
+          <time>${escapeHtml(a.date)}</time>
+        </div>`).join("");
+    }
+
+    function renderNotifications() {
+      if (!el.notifList || !currentUser) return;
+      const mine = (featuresData.inAppNotifications || [])
+        .filter((n) => Number(n.userId) === Number(currentUser.id))
+        .sort((a, b) => Number(b.id) - Number(a.id));
+      if (!mine.length) {
+        el.notifList.innerHTML = `<p class="muted" style="padding:16px;">No notifications.</p>`;
+        return;
+      }
+      el.notifList.innerHTML = mine.map((n) => `
+        <div class="notif-item ${n.read ? "read" : "unread"}" data-notif-id="${n.id}">
+          <strong>${escapeHtml(n.type)}</strong>
+          <p style="margin:4px 0 0;">${escapeHtml(n.message)}</p>
+          <span class="muted small">${escapeHtml(n.date)}</span>
+        </div>`).join("");
+    }
+
+    function renderMessages() {
+      if (!el.messageThread || !currentUser) return;
+      const t = langPack(currentLang);
+      const uid = Number(currentUser.id);
+      const thread = (featuresData.messages || []).filter((m) => {
+        const from = Number(m.fromUserId);
+        const to = Number(m.toUserId);
+        if (currentUser.role === "student") {
+          if (messageTargetSupervisorId) {
+            const supId = Number(messageTargetSupervisorId);
+            return (from === uid && to === supId) || (from === supId && to === uid);
+          }
+          return from === uid || to === uid;
+        }
+        return true;
+      }).sort((a, b) => Number(a.id) - Number(b.id));
+      if (!thread.length) {
+        el.messageThread.innerHTML = `<p class="muted">${escapeHtml(t.noMessagesYet)}</p>`;
+        return;
+      }
+      el.messageThread.innerHTML = thread.map((m) => {
+        const sent = Number(m.fromUserId) === uid;
+        return `<div class="message-bubble ${sent ? "sent" : "received"}">${escapeHtml(m.text)}<small>${escapeHtml(m.date)} · ${escapeHtml(m.fromName || "")}</small></div>`;
+      }).join("");
+      el.messageThread.scrollTop = el.messageThread.scrollHeight;
+    }
+
+    function renderCompareSelectors() {
+      if (!currentUser || currentUser.role !== "student" || !el.compareSelectA) return;
+      const mine = dissertations.filter((d) => Number(d.studentId) === Number(currentUser.id)).sort((a, b) => b.version - a.version);
+      const opts = mine.map((d) => `<option value="${d.id}">${docTypeLabel(d.docType)} V${d.version} — ${escapeHtml(d.fileName)}</option>`).join("");
+      el.compareSelectA.innerHTML = opts;
+      el.compareSelectB.innerHTML = opts;
+    }
+
+    function renderCompareResult() {
+      if (!el.compareResult) return;
+      const idA = Number(el.compareSelectA?.value);
+      const idB = Number(el.compareSelectB?.value);
+      const a = dissertations.find((d) => Number(d.id) === idA);
+      const b = dissertations.find((d) => Number(d.id) === idB);
+      if (!a || !b) {
+        el.compareResult.innerHTML = `<p class="muted">Select two versions to compare.</p>`;
+        return;
+      }
+      const field = (label, va, vb) => `
+        <div class="compare-card"><p class="muted small">${label}</p><p><strong>A:</strong> ${escapeHtml(va)}</p><p><strong>B:</strong> ${escapeHtml(vb)}</p></div>`;
+      el.compareResult.innerHTML = [
+        field("File name", a.fileName, b.fileName),
+        field("Document type", docTypeLabel(a.docType), docTypeLabel(b.docType)),
+        field("Version", `V${a.version}`, `V${b.version}`),
+        field("Upload date", a.uploadDate, b.uploadDate),
+        field("Status", a.status, b.status),
+        field("Supervisor comment", a.comment || "—", b.comment || "—")
+      ].join("");
+    }
+
+    function renderSupervisorAnalytics() {
+      if (!el.supervisorAnalytics) return;
+      const studentIds = [...new Set(dissertations.map((d) => Number(d.studentId)))];
+      const latestByStudent = studentIds.map((sid) => {
+        const items = dissertations.filter((d) => Number(d.studentId) === sid).sort((a, b) => b.version - a.version);
+        return items[0];
+      }).filter(Boolean);
+      const approved = latestByStudent.filter((d) => d.status === "Approved").length;
+      const pending = latestByStudent.filter((d) => d.status === "Pending").length;
+      const revision = latestByStudent.filter((d) => d.status === "Needs Revision").length;
+      const late = dissertations.filter((d) => isSubmissionLate(d)).length;
+      const defenses = featuresData.defense ? 1 : 0;
+      const cards = [
+        { label: "Students Approved", value: approved },
+        { label: "Students Pending", value: pending },
+        { label: "Need Revision", value: revision },
+        { label: "Late Submissions", value: late },
+        { label: "Upcoming Defenses", value: defenses }
+      ];
+      el.supervisorAnalytics.innerHTML = cards.map((c) => `
+        <div class="summary-card"><p>${escapeHtml(c.label)}</p><h4>${c.value}</h4></div>`).join("");
+      if (el.supervisorChartWrap) {
+        const max = Math.max(approved, pending, revision, late, 1);
+        const bars = [
+          { label: "Approved", value: approved, color: "var(--approved)" },
+          { label: "Pending", value: pending, color: "var(--pending)" },
+          { label: "Revision", value: revision, color: "var(--revision)" },
+          { label: "Late", value: late, color: "var(--review)" }
+        ];
+        el.supervisorChartWrap.innerHTML = `<h4 style="margin-bottom:8px;">Submission Overview</h4><div class="chart-mini">${bars.map((b) => `
+          <div class="chart-bar-wrap"><div class="chart-bar" style="height:${Math.round((b.value / max) * 72) + 8}px;background:${b.color}"></div><span class="chart-bar-label">${escapeHtml(b.label)} (${b.value})</span></div>`).join("")}</div>`;
+      }
+    }
+
+    function renderGanttChart() {
+      if (!el.ganttChart || !currentUser) return;
+      const key = String(currentUser.id);
+      const milestones = featuresData.gantt[key] || [];
+      if (!milestones.length) {
+        el.ganttChart.innerHTML = `<p class="muted">Add milestones to plan your dissertation timeline.</p>`;
+        return;
+      }
+      const now = Date.now();
+      el.ganttChart.innerHTML = milestones.map((m) => {
+        const due = new Date(m.date).getTime();
+        const pct = due <= now ? 100 : Math.max(12, 100 - Math.min(88, Math.round((due - now) / (1000 * 60 * 60 * 24 * 30) * 40)));
+        return `<div class="gantt-row">
+          <span>${escapeHtml(m.name)}</span>
+          <div class="gantt-bar-wrap"><div class="gantt-bar" style="width:${pct}%"></div></div>
+          <span class="muted small">${escapeHtml(m.date)} <button class="btn btn-ghost small" type="button" data-gantt-del="${m.id}">×</button></span>
+        </div>`;
+      }).join("");
+    }
+
+    function renderReferences() {
+      if (!el.refList || !currentUser) return;
+      const key = String(currentUser.id);
+      const refs = featuresData.references[key] || [];
+      if (!refs.length) {
+        el.refList.innerHTML = `<p class="muted">No references saved yet.</p>`;
+        return;
+      }
+      el.refList.innerHTML = refs.slice().reverse().map((r) => `
+        <div class="ref-item">
+          <strong>${escapeHtml(r.title)}</strong>
+          ${r.doi ? `<p class="muted small">DOI: ${escapeHtml(r.doi)}</p>` : ""}
+          ${r.url ? `<p><a href="${escapeHtml(r.url)}" target="_blank" rel="noopener" style="color:#93c5fd;">${escapeHtml(r.url)}</a></p>` : ""}
+          ${r.notes ? `<p style="margin-top:6px;">${escapeHtml(r.notes)}</p>` : ""}
+          <button class="btn btn-ghost small mt" type="button" data-ref-del="${r.id}">Remove</button>
+        </div>`).join("");
+    }
+
+    function renderRecommendations() {
+      if (!el.recommendList) return;
+      const mocks = [
+        "Review recent literature on your topic from the last 3 years.",
+        "Align your methodology chapter with your stated research questions.",
+        "Schedule a supervisor meeting before your next submission deadline.",
+        "Use your reference manager to track DOIs for all cited papers.",
+        "Complete chapter progress sliders to reflect actual writing status."
+      ];
+      el.recommendList.innerHTML = mocks.map((t, i) => `
+        <div class="card" style="background:#0f1b34;"><strong>Tip ${i + 1}</strong><p class="muted" style="margin-top:6px;">${escapeHtml(t)}</p></div>`).join("");
+    }
+
+    function generateStudentReport() {
+      if (!currentUser || currentUser.role !== "student" || !el.reportPrintArea) return;
+      const sid = Number(currentUser.id);
+      const mine = dissertations.filter((d) => Number(d.studentId) === sid).sort((a, b) => b.version - a.version);
+      const rows = mine.map((d) => `<tr><td>${escapeHtml(docTypeLabel(d.docType))}</td><td>V${d.version}</td><td>${escapeHtml(d.fileName)}</td><td>${escapeHtml(d.status)}</td><td>${escapeHtml(d.comment || "—")}</td><td>${escapeHtml(d.uploadDate)}</td></tr>`).join("");
+      el.reportPrintArea.innerHTML = `
+        <div class="report-print-area">
+          <h2>PG Dissertation Progress Report</h2>
+          <p><strong>Student:</strong> ${escapeHtml(currentUser.name)}</p>
+          <p><strong>Generated:</strong> ${escapeHtml(nowDate())}</p>
+          <h3 style="margin-top:20px;">Submission History</h3>
+          <table style="width:100%;border-collapse:collapse;margin-top:10px;"><thead><tr><th>Type</th><th>Ver</th><th>File</th><th>Status</th><th>Comment</th><th>Date</th></tr></thead><tbody>${rows || "<tr><td colspan='6'>No submissions</td></tr>"}</tbody></table>
+        </div>`;
+      el.reportPrintArea.classList.remove("hidden");
+      window.print();
+      el.reportPrintArea.classList.add("hidden");
+    }
+
+    function showWorkspaceTab(tab) {
+      document.querySelectorAll(".workspace-tab").forEach((btn) => btn.classList.toggle("active", btn.getAttribute("data-ws-tab") === tab));
+      const map = { tasks: "wsTasksPanel", chapters: "wsChaptersPanel", gantt: "wsGanttPanel", refs: "wsRefsPanel", tips: "wsTipsPanel" };
+      Object.entries(map).forEach(([k, id]) => {
+        const panel = document.getElementById(id);
+        if (panel) panel.classList.toggle("hidden", k !== tab);
+      });
+      if (tab === "tasks") renderTaskBoard();
+      if (tab === "chapters") renderChapterProgress();
+      if (tab === "gantt") renderGanttChart();
+      if (tab === "refs") renderReferences();
+      if (tab === "tips") renderRecommendations();
+    }
+
+    function resetViews() {
+      el.landingView.classList.add("hidden");
+      el.loginView.classList.add("hidden");
+      el.signupView.classList.add("hidden");
+      el.studentView.classList.add("hidden");
+      el.supervisorDetailsView.classList.add("hidden");
+      el.featuresView.classList.add("hidden");
+      el.supervisorView.classList.add("hidden");
+      el.journalView.classList.add("hidden");
+      el.aboutView.classList.add("hidden");
+      el.notificationsView?.classList.add("hidden");
+      el.messagesView?.classList.add("hidden");
+      el.compareView?.classList.add("hidden");
+      el.calendarView?.classList.add("hidden");
+    }
+
+    function updateNavigation() {
+      const loggedIn = Boolean(currentUser);
+      const isStudent = loggedIn && currentUser.role === "student";
+      el.logoutBtn.classList.toggle("hidden", !loggedIn);
+      el.journalBtn.classList.toggle("hidden", !isStudent);
+      el.featuresBtn.classList.toggle("hidden", !loggedIn);
+      el.notifBtn?.classList.toggle("hidden", !loggedIn);
+      el.messagesBtn?.classList.toggle("hidden", !loggedIn);
+      el.openSupervisorDetailsBtn?.classList.toggle("hidden", !isStudent);
+      updateNavBadges();
+    }
+
+    function showLandingView() {
+      resetViews();
+      el.landingView.classList.remove("hidden");
+      updateNavigation();
+    }
+
+    function showLoginView() {
+      resetViews();
+      el.loginView.classList.remove("hidden");
+      updateNavigation();
+    }
+
+    function canManageAcademicFlow() {
+      return Boolean(currentUser && (currentUser.role === "supervisor"));
+    }
+
+    function showFeaturesView() {
+      if (!currentUser) {
+        showLoginView();
+        return;
+      }
+      resetViews();
+      el.featuresView.classList.remove("hidden");
+      updateNavigation();
+      renderFeatureHub();
+    }
+
+    function renderFeatureHub() {
+      renderAnnouncements();
+      renderMeetings();
+      renderDefense();
+      renderPlagiarism();
+      renderCalendarList(el.featuresCalendarList);
+      renderNotificationPrefs();
+    }
+
+    function renderAnnouncements() {
+      const list = featuresData.announcements || [];
+      if (!list.length) {
+        el.announceList.innerHTML = `<p class="muted">No announcements yet.</p>`;
+      } else {
+        el.announceList.innerHTML = list.slice().reverse().map((a) => `
+          <div class="card" style="background:#0f1b34;">
+            <strong>${escapeHtml(a.title)}</strong>
+            <p class="muted small">${escapeHtml(a.date)}</p>
+            <p>${escapeHtml(a.body)}</p>
+          </div>
+        `).join("");
+      }
+      el.announceForm.classList.toggle("hidden", !canManageAcademicFlow());
+    }
+
+    function renderMeetings() {
+      const mine = (featuresData.meetings || []).filter((m) => currentUser.role === "supervisor" ? true : Number(m.studentId) === Number(currentUser.id));
+      if (!mine.length) {
+        el.meetingList.innerHTML = `<p class="muted">No meetings yet.</p>`;
+      } else {
+        el.meetingList.innerHTML = mine.slice().reverse().map((m) => `
+          <div class="card" style="background:#0f1b34;">
+            <strong>${escapeHtml(m.topic)}</strong> - ${escapeHtml(m.date)}<br />
+            <span class="muted">Status: ${escapeHtml(m.status)}</span>
+            ${canManageAcademicFlow() ? `
+            <div class="file-picker-row mt">
+              <button class="btn btn-ghost small" data-meeting-status="${m.id}:Approved">Approve</button>
+              <button class="btn btn-ghost small" data-meeting-status="${m.id}:Rejected">Reject</button>
+            </div>` : ""}
+          </div>
+        `).join("");
+      }
+    }
+
+    function renderDefense() {
+      const d = featuresData.defense;
+      if (!d) el.defenseView.textContent = "No defense scheduled yet.";
+      else el.defenseView.innerHTML = `<strong>Date:</strong> ${escapeHtml(d.date)}<br /><strong>Room/Link:</strong> ${escapeHtml(d.room)}`;
+      el.defenseForm.classList.toggle("hidden", !canManageAcademicFlow());
+    }
+
+    function renderPlagiarism() {
+      const key = String(currentUser?.id || "");
+      const p = (featuresData.plagiarism || {})[key];
+      el.plagView.innerHTML = p
+        ? `<strong>Report reference:</strong> ${escapeHtml(p.report)} | <strong>Similarity:</strong> ${escapeHtml(String(p.similarity))}% | <strong>Within threshold:</strong> ${p.verified ? "Yes" : "No"}`
+        : `<p class="empty-state" style="padding:20px;"><h4>No self-assessment recorded</h4><p>Save your external plagiarism report results here for compliance tracking.</p></p>`;
+      el.plagForm.classList.toggle("hidden", !currentUser || currentUser.role !== "student");
+    }
+
+    function renderChapterProgress() {
+      if (!currentUser || !el.chapterProgressWrap) return;
+      const key = String(currentUser.id);
+      if (!featuresData.chapterProgress[key]) featuresData.chapterProgress[key] = [0, 0, 0, 0, 0];
+      const arr = featuresData.chapterProgress[key];
+      el.chapterProgressWrap.innerHTML = arr.map((v, idx) => `
+        <label>Chapter ${idx + 1}: ${v}%
+          <input type="range" min="0" max="100" value="${v}" data-chapter-idx="${idx}" />
+        </label>
+      `).join("");
+    }
+
+    function renderTaskBoard() {
+      const tasks = featuresData.tasks || [];
+      const mk = (status) => tasks.filter((t) => t.status === status).map((t) => `
+        <div class="card" style="background:#0f1b34;">
+          ${escapeHtml(t.text)}
+          <div class="file-picker-row mt">
+            ${status !== "todo" ? `<button class="btn btn-ghost small" data-task-move="${t.id}:todo">To Do</button>` : ""}
+            ${status !== "doing" ? `<button class="btn btn-ghost small" data-task-move="${t.id}:doing">Doing</button>` : ""}
+            ${status !== "done" ? `<button class="btn btn-ghost small" data-task-move="${t.id}:done">Done</button>` : ""}
+          </div>
+        </div>
+      `).join("") || `<p class="muted">No tasks</p>`;
+      el.taskBoard.innerHTML = `
+        <div class="card"><h5>To Do</h5>${mk("todo")}</div>
+        <div class="card"><h5>Doing</h5>${mk("doing")}</div>
+        <div class="card"><h5>Done</h5>${mk("done")}</div>
+      `;
+    }
+
+    function renderNotificationPrefs() {
+      if (!currentUser) return;
+      const key = String(currentUser.id);
+      const p = featuresData.notifications[key] || { email: true, whatsapp: false, inapp: true };
+      el.notifEmail.checked = Boolean(p.email);
+      el.notifWhatsapp.checked = Boolean(p.whatsapp);
+      el.notifInApp.checked = Boolean(p.inapp);
+    }
+
+    function renderArchiveState() {
+      const on = Boolean(featuresData.archiveMode);
+      el.archiveToggle.checked = on;
+      el.archiveStatus.textContent = on ? "Archive mode is ON (read-only)." : "Archive mode is OFF.";
+      el.archiveSaveBtn.disabled = !canManageAcademicFlow();
+      el.archiveToggle.disabled = !canManageAcademicFlow();
+    }
+
+    function buildCertificateHtml(studentName, date) {
+      return `
+        <div class="cert-preview">
+          <p style="letter-spacing:.2em;text-transform:uppercase;font-size:12px;color:var(--muted);">Postgraduate Dissertation</p>
+          <h3>Certificate of Approval</h3>
+          <p style="margin:16px 0;line-height:1.7;">This certifies that the dissertation submitted by</p>
+          <p style="font-size:1.25rem;font-weight:700;margin:8px 0;">${escapeHtml(studentName)}</p>
+          <p style="margin:16px 0;line-height:1.7;">has been reviewed and approved in accordance with university postgraduate requirements.</p>
+          <p style="margin-top:24px;font-size:13px;color:var(--muted);">Issued: ${escapeHtml(date)}</p>
+          <p style="margin-top:8px;font-size:13px;color:var(--muted);">PG Dissertation Management System</p>
+        </div>`;
+    }
+
+    function renderCertificates() {
+      const mineApproved = dissertations.filter((d) => Number(d.studentId) === Number(currentUser?.id) && d.status === "Approved").length;
+      el.generateCertBtn.disabled = !currentUser || currentUser.role !== "student" || mineApproved === 0;
+      const mine = (featuresData.certificates || []).filter((c) => Number(c.studentId) === Number(currentUser?.id));
+      el.certList.innerHTML = mine.length
+        ? mine.slice().reverse().map((c) => `
+          <div class="card" style="background:var(--bg-soft);">
+            ${buildCertificateHtml(c.studentName || currentUser?.name || "Student", c.date)}
+            <button class="btn btn-ghost small mt" type="button" data-cert-print="${c.id}">Print Certificate</button>
+          </div>`).join("")
+        : `<div class="empty-state"><h4>No certificates issued</h4><p>Certificates become available after your dissertation is approved.</p></div>`;
+    }
+
+    function persistAll() {
+      saveJSON(STORAGE_USERS_KEY, users);
+      saveJSON(STORAGE_DISSERTATIONS_KEY, dissertations);
+      saveJSON(STORAGE_SESSION_KEY, currentUser);
+      saveJSON(STORAGE_JOURNAL_KEY, journalEntries);
+      saveJSON(STORAGE_FEATURES_KEY, featuresData);
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function findOrCreateUser(role, name, password = "", profile = {}) {
+      const normalized = name.trim().toLowerCase();
+      const pool = role === "student" ? users.students : users.supervisors;
+      let user = pool.find((u) => u.name === normalized);
+      if (!user) {
+        user = {
+          id: Date.now() + Math.floor(Math.random() * 1000),
+          name: normalized,
+          password: String(password),
+          email: String(profile.email || ""),
+          phone: String(profile.phone || "")
+        };
+        pool.push(user);
+      }
+      return user;
+    }
+
+    function findUser(role, name) {
+      const normalized = name.trim().toLowerCase();
+      const pool = role === "student" ? users.students : users.supervisors;
+      return pool.find((u) => u.name === normalized) || null;
+    }
+
+    function findUserByEmail(email) {
+      const normalized = String(email || "").trim().toLowerCase();
+      const allUsers = [...users.students, ...users.supervisors];
+      return allUsers.find((u) => String(u.email || "").toLowerCase() === normalized) || null;
+    }
+
+    function registerUser(role, name, password, profile = {}) {
+      const existing = findUser(role, name);
+      if (existing) return { ok: false, reason: "exists", user: null };
+      const user = findOrCreateUser(role, name, password, profile);
+      return { ok: true, reason: "created", user };
+    }
+
+    function loginUser(role, name, password) {
+      const user = findUser(role, name);
+      if (!user) return null;
+      if (String(user.password || "") !== String(password)) return null;
+      return user;
+    }
+
+    function ensureDemoAccount(role, name, password, profile = {}) {
+      let user = findUser(role, name);
+      if (!user) {
+        user = findOrCreateUser(role, name, password, profile);
+      } else {
+        user.password = String(password);
+        if (profile.email) user.email = profile.email;
+        if (profile.phone) user.phone = profile.phone;
+      }
+      return user;
+    }
+
+    function ensureDefaultAccounts() {
+      ensureDemoAccount("student", "ali", "1234", {
+        email: "ali@student.local",
+        phone: "+20 100 000 0001"
+      });
+      ensureDemoAccount("student", "sara", "1234", {
+        email: "sara@student.local",
+        phone: "+20 100 000 0002"
+      });
+      ensureDemoAccount("supervisor", "dr_ahmed", "admin", {
+        email: "dr_ahmed@university.edu",
+        phone: "+20 100 000 0000"
+      });
+      saveJSON(STORAGE_USERS_KEY, users);
+    }
+
+    function renderStudentWorkflow() {
+      if (!el.studentWorkflow || !currentUser) return;
+      const sid = Number(currentUser.id);
+      const latest = dissertations.filter((d) => Number(d.studentId) === sid).sort((a, b) => b.version - a.version)[0];
+      const status = latest?.status || "Pending";
+      const steps = ["Pending", "Under Review", "Needs Revision", "Approved"];
+      const activeIdx = steps.indexOf(status);
+      el.studentWorkflow.innerHTML = steps.map((s, i) => {
+        const active = status === "Needs Revision" ? (s === "Needs Revision" || s === "Under Review") : (i <= activeIdx && activeIdx >= 0);
+        return `<div class="workflow-step${active ? " active" : ""}">${escapeHtml(statusText(s))}</div>`;
+      }).join("");
+    }
+
+    function renderStudentTable() {
+      const sid = Number(currentUser.id);
+      const myItems = dissertations.filter((d) => Number(d.studentId) === sid).sort((a, b) => b.version - a.version);
+      const t = langPack(currentLang);
+      if (!myItems.length) {
+        el.studentTableBody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><h4>${t.noSubmissions || i18n.en.noSubmissions}</h4><p>${t.noSubmissionsDesc || i18n.en.noSubmissionsDesc}</p></div></td></tr>`;
+      } else {
+        el.studentTableBody.innerHTML = myItems.map((item) => `
+          <tr>
+            <td>${escapeHtml(docTypeLabel(item.docType))}</td>
+            <td><button type="button" class="open-file-name" data-open-student-file="${item.id}" title="${escapeHtml(t.openFile)}">${escapeHtml(item.fileName)}</button></td>
+            <td>V${item.version}</td>
+            <td>${statusBadgeHtml(item.status)}${isSubmissionLate(item) ? ` <span class="muted small">${t.lateTag || i18n.en.lateTag}</span>` : ""}</td>
+            <td>${escapeHtml(item.comment || "—")}${renderFeedbackHistory(item)}</td>
+            <td>${escapeHtml(item.uploadDate)}</td>
+          </tr>
+        `).join("");
+      }
+
+      const summary = myItems.reduce((acc, it) => {
+        acc.total += 1;
+        if (it.status === "Pending") acc.pending += 1;
+        if (it.status === "Needs Revision") acc.revision += 1;
+        if (it.status === "Approved") acc.approved += 1;
+        return acc;
+      }, { total: 0, pending: 0, revision: 0, approved: 0 });
+
+      el.totalCount.textContent = summary.total;
+      el.pendingCount.textContent = summary.pending;
+      el.revisionCount.textContent = summary.revision;
+      el.approvedCount.textContent = summary.approved;
+    }
+
+    function renderSupervisorContacts() {
+      const t = langPack(currentLang);
+      if (!el.supervisorContactsList) return;
+      const contacts = (users.supervisors || []).map((s) => ({
+        id: s.id,
+        name: s.name || "supervisor",
+        email: s.email || "-",
+        phone: s.phone || "-",
+        emailValid: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s.email || "").trim()),
+        phoneRaw: String(s.phone || "").trim()
+      }));
+      if (!contacts.length) {
+        el.supervisorContactsList.textContent = t.noSupervisorContacts || i18n.en.noSupervisorContacts;
+        return;
+      }
+      el.supervisorContactsList.innerHTML = contacts.map((c) => `
+        <div style="padding:8px 0; border-bottom:1px solid rgba(148,163,184,.2);">
+          <strong>${escapeHtml(c.name)}</strong><br />
+          ${t.contactEmail || i18n.en.contactEmail}: ${escapeHtml(c.email)}<br />
+          ${t.contactPhone || i18n.en.contactPhone}: ${escapeHtml(c.phone)}
+          <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+            ${c.emailValid
+              ? `<a class="btn btn-ghost small" href="mailto:${escapeHtml(c.email)}">${t.contactEmailBtn || i18n.en.contactEmailBtn}</a>`
+              : ""}
+            ${c.emailValid
+              ? `<a class="btn btn-ghost small" href="https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(c.email)}" target="_blank" rel="noopener noreferrer">${t.contactGmailBtn || i18n.en.contactGmailBtn}</a>`
+              : ""}
+            ${c.phoneRaw
+              ? `<a class="btn btn-ghost small" href="tel:${escapeHtml(c.phoneRaw.replace(/\s+/g, ""))}">${t.contactCallBtn || i18n.en.contactCallBtn}</a>`
+              : ""}
+            ${c.phoneRaw
+              ? `<a class="btn btn-ghost small" href="https://wa.me/${escapeHtml(c.phoneRaw.replace(/[^0-9]/g, ""))}" target="_blank" rel="noopener noreferrer">${t.contactWhatsappBtn || i18n.en.contactWhatsappBtn}</a>`
+              : ""}
+            ${c.emailValid
+              ? `<button class="btn btn-ghost small" type="button" data-copy-email="${escapeHtml(c.email)}">${t.contactCopyEmailBtn || i18n.en.contactCopyEmailBtn}</button>`
+              : ""}
+            ${c.phoneRaw
+              ? `<button class="btn btn-ghost small" type="button" data-copy-phone="${escapeHtml(c.phoneRaw)}">${t.contactCopyPhoneBtn || i18n.en.contactCopyPhoneBtn}</button>`
+              : ""}
+            <button class="btn btn-primary small" type="button" data-message-sup="${Number(c.id)}">${escapeHtml(t.contactMessageBtn)}</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderSupervisorSummary() {
+      if (!el.supervisorSummary) return;
+      const t = langPack(currentLang);
+      const counts = { total: 0, pending: 0, review: 0, revision: 0, approved: 0 };
+      dissertations.forEach((d) => {
+        counts.total++;
+        if (d.status === "Pending") counts.pending++;
+        if (d.status === "Under Review") counts.review++;
+        if (d.status === "Needs Revision") counts.revision++;
+        if (d.status === "Approved") counts.approved++;
+      });
+      const cards = [
+        { label: t.summaryTotal || "Total", value: counts.total, icon: "M9 17v-2m3 2v-4m3 4v-6" },
+        { label: t.summaryPending || "Pending", value: counts.pending, icon: "M12 8v4l3 3" },
+        { label: t.summaryReview || "Under Review", value: counts.review, icon: "M15 12a3 3 0 1 1-6 0" },
+        { label: t.summaryRevision || "Revision Required", value: counts.revision, icon: "M4 4v5h.582m15.356 2A8.001 8.001 0 0 0 4.582 9" },
+        { label: t.summaryApproved || "Approved", value: counts.approved, icon: "M9 12l2 2 4-4" }
+      ];
+      el.supervisorSummary.innerHTML = cards.map((c) => `
+        <div class="summary-card">
+          <div class="summary-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="${c.icon}"/></svg></div>
+          <p>${escapeHtml(c.label)}</p>
+          <h4>${c.value}</h4>
+        </div>`).join("");
+    }
+
+    function renderSupervisorTable() {
+      const filter = el.statusFilter.value;
+      const items = dissertations.filter((d) => (filter === "all" ? true : d.status === filter)).sort((a, b) => b.id - a.id);
+      const t = langPack(currentLang);
+      if (!items.length) {
+        el.supervisorTableBody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><h4>${t.emptySupervisor || i18n.en.emptySupervisor}</h4><p>${t.emptySupervisorDesc || i18n.en.emptySupervisorDesc}</p></div></td></tr>`;
+        return;
+      }
+      el.supervisorTableBody.innerHTML = items.map((item) => {
+        const student = users.students.find((s) => Number(s.id) === Number(item.studentId));
+        return `
+          <tr>
+            <td>${escapeHtml(student ? student.name : t.unknown)}</td>
+            <td>${escapeHtml(docTypeLabel(item.docType))}</td>
+            <td><button type="button" class="open-file-name" data-open-student-file="${item.id}" title="${escapeHtml(t.openFile)}">${escapeHtml(item.fileName)}</button></td>
+            <td>V${item.version}</td>
+            <td>${statusBadgeHtml(item.status)}</td>
+            <td>${escapeHtml(item.comment || "—")}${renderFeedbackHistory(item)}</td>
+            <td>${escapeHtml(item.uploadDate)}</td>
+            <td>
+              <div class="actions">
+                <textarea id="comment-${item.id}" placeholder="${t.reviewPh}">${item.comment || ""}</textarea>
+                <select id="status-${item.id}">
+                  <option value="Under Review" ${item.status === "Under Review" ? "selected" : ""}>${t.statusUnderReview}</option>
+                  <option value="Needs Revision" ${item.status === "Needs Revision" ? "selected" : ""}>${t.statusNeedsRevision}</option>
+                  <option value="Approved" ${item.status === "Approved" ? "selected" : ""}>${t.statusApproved}</option>
+                </select>
+                <p class="muted small" style="margin:0;">${t.supervisorAttachHint}</p>
+                <div class="file-picker-row">
+                  <input type="file" id="super-attach-${item.id}" class="super-attach-input file-input-native" data-attach-id="${item.id}" />
+                  <button type="button" class="btn btn-ghost small" data-browse-attach="${item.id}">${t.browseFile}</button>
+                  <span class="muted small" id="super-attach-name-${item.id}">${item.supervisorAttachmentName ? escapeHtml(item.supervisorAttachmentName) : "—"}</span>
+                </div>
+                <button class="btn btn-primary small" data-save-id="${item.id}">${t.save}</button>
+              </div>
+            </td>
+          </tr>`;
+      }).join("");
+    }
+
+    function showStudentDashboard() {
+      if (!currentUser || currentUser.role !== "student") {
+        showLandingView();
+        return;
+      }
+      resetViews();
+      el.studentView.classList.remove("hidden");
+      const t = langPack(currentLang);
+      el.studentBadge.textContent = t.badgeStudent;
+      el.projectFile.setAttribute("required", "");
+      if (featuresData.archiveMode) {
+        el.uploadBtn.disabled = true;
+        el.projectFile.disabled = true;
+        el.browseFileBtn.disabled = true;
+      } else {
+        el.uploadBtn.disabled = false;
+        el.projectFile.disabled = false;
+        el.browseFileBtn.disabled = false;
+      }
+      updateNavigation();
+      updateDeadlineInfo();
+      updateStudentFileDisplay();
+      renderSupervisorContacts();
+      renderStudentTable();
+      renderStudentWorkflow();
+      renderCompareSelectors();
+      updateNavBadges();
+    }
+
+    function showSupervisorDashboard() {
+      if (!currentUser || currentUser.role !== "supervisor") {
+        showLandingView();
+        return;
+      }
+      resetViews();
+      el.supervisorView.classList.remove("hidden");
+      updateNavigation();
+      renderSupervisorSummary();
+      renderSupervisorAnalytics();
+      renderSupervisorTable();
+      updateNavBadges();
+    }
+
+    function showJournalView() {
+      if (!currentUser || currentUser.role !== "student") {
+        const t = langPack(currentLang);
+        showToast(t.toastJournalNeedLogin || i18n.en.toastJournalNeedLogin, "error");
+        if (!currentUser) showLoginView();
+        else openCurrentSession();
+        return;
+      }
+      resetViews();
+      el.journalView.classList.remove("hidden");
+      el.logoutBtn.classList.remove("hidden");
+      showWorkspaceTab("tasks");
+    }
+
+    function showSupervisorDetailsView() {
+      if (!currentUser || currentUser.role !== "student") {
+        openCurrentSession();
+        return;
+      }
+      resetViews();
+      el.supervisorDetailsView.classList.remove("hidden");
+      el.logoutBtn.classList.remove("hidden");
+      renderSupervisorContacts();
+    }
+
+    function showSignupView(seed = {}) {
+      resetViews();
+      el.signupView.classList.remove("hidden");
+      updateNavigation();
+      if (seed.role) el.signupRole.value = seed.role;
+      if (seed.name) el.signupName.value = seed.name;
+      if (seed.password) el.signupPassword.value = seed.password;
+      if (seed.email) el.signupEmail.value = seed.email;
+      if (seed.phone) el.signupPhone.value = seed.phone;
+    }
+
+    function openCurrentSession() {
+      if (!currentUser) {
+        showLandingView();
+        return;
+      }
+      if (currentUser.role === "student") showStudentDashboard();
+      else if (currentUser.role === "supervisor") showSupervisorDashboard();
+      else showLandingView();
+    }
+
+    function showAboutView() {
+      resetViews();
+      el.aboutView.classList.remove("hidden");
+      el.logoutBtn.classList.toggle("hidden", !currentUser);
+    }
+
+    el.landingLoginBtn?.addEventListener("click", showLoginView);
+    el.landingRegisterBtn?.addEventListener("click", () => showSignupView());
+    el.loginBackBtn?.addEventListener("click", showLandingView);
+
+    el.loginForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const role = (el.role.value || "student").toLowerCase();
+      const name = sanitizeText(el.name.value, 100);
+      const password = sanitizeText(el.password.value, 128);
+      const t = langPack(currentLang);
+      el.loginNameError.textContent = "";
+      el.loginPasswordError.textContent = "";
+      if (!name) { el.loginNameError.textContent = t.toastMissingCreds; return; }
+      if (!password) { el.loginPasswordError.textContent = t.toastMissingCreds; return; }
+
+      const userRole = role === "supervisor" ? "supervisor" : "student";
+      const loginBtn = document.getElementById("t_loginBtn");
+      setButtonLoading(loginBtn, true, t.loginBtn);
+      const user = loginUser(userRole, name, password);
+      if (!user) {
+        setButtonLoading(loginBtn, false);
+        el.loginPasswordError.textContent = t.toastInvalidCreds;
+        showToast(t.toastInvalidCreds, "error");
+        return;
+      }
+      currentUser = { id: user.id, name: user.name, role: userRole };
+      persistAll();
+      setButtonLoading(loginBtn, false);
+      showToast(t.toastLoginOk, "success");
+      openCurrentSession();
+    });
+
+    el.registerBtn.addEventListener("click", () => {
+      const role = (el.role.value || "student").toLowerCase();
+      const userRole = role === "supervisor" ? "supervisor" : "student";
+      const name = el.name.value.trim();
+      const password = el.password.value.trim();
+      showSignupView({ role: userRole, name, password });
+    });
+
+    el.signupForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const t = langPack(currentLang);
+      const role = (el.signupRole.value || "student").toLowerCase();
+      const userRole = role === "supervisor" ? "supervisor" : "student";
+      const name = sanitizeText(el.signupName.value, 100);
+      const email = sanitizeText(el.signupEmail.value, 120);
+      const phone = sanitizeText(el.signupPhone.value, 20);
+      const password = sanitizeText(el.signupPassword.value, 128);
+      const confirmPassword = sanitizeText(el.signupConfirmPassword.value, 128);
+      el.signupNameError.textContent = "";
+      el.signupEmailError.textContent = "";
+      el.signupPhoneError.textContent = "";
+      el.signupPasswordError.textContent = "";
+      el.signupConfirmError.textContent = "";
+      let valid = true;
+      if (!name) { el.signupNameError.textContent = t.toastSignupMissing; valid = false; }
+      if (!email) { el.signupEmailError.textContent = t.toastSignupMissing; valid = false; }
+      else if (!isValidEmail(email)) { el.signupEmailError.textContent = t.toastSignupEmailInvalid; valid = false; }
+      if (!phone) { el.signupPhoneError.textContent = t.toastSignupMissing; valid = false; }
+      else if (!/^[0-9+\-\s()]{7,20}$/.test(phone)) { el.signupPhoneError.textContent = t.toastSignupPhoneInvalid; valid = false; }
+      if (!password) { el.signupPasswordError.textContent = t.toastSignupMissing; valid = false; }
+      else if (!isStrongPassword(password)) { el.signupPasswordError.textContent = t.toastSignupPasswordWeak; valid = false; }
+      if (!confirmPassword) { el.signupConfirmError.textContent = t.toastSignupMissing; valid = false; }
+      else if (password !== confirmPassword) { el.signupConfirmError.textContent = t.toastSignupPasswordMismatch; valid = false; }
+      if (!valid) { showToast(t.toastSignupMissing, "error"); return; }
+      if (findUserByEmail(email)) {
+        el.signupEmailError.textContent = t.toastEmailExists;
+        showToast(t.toastEmailExists, "error");
+        return;
+      }
+      setButtonLoading(el.signupForm.querySelector("button[type=submit]"), true, t.signupSubmitBtn);
+      const created = registerUser(userRole, name, password, { email, phone });
+      if (!created.ok) {
+        setButtonLoading(el.signupForm.querySelector("button[type=submit]"), false);
+        el.signupNameError.textContent = t.toastUserExists;
+        showToast(t.toastUserExists, "error");
+        return;
+      }
+      const user = created.user;
+      currentUser = { id: user.id, name: user.name, role: userRole };
+      persistAll();
+      el.loginForm.reset();
+      el.signupForm.reset();
+      setButtonLoading(el.signupForm.querySelector("button[type=submit]"), false);
+      showToast(t.toastLoginOk, "success");
+      openCurrentSession();
+    });
+
+    el.signupBackBtn.addEventListener("click", showLoginView);
+
+    el.browseFileBtn.addEventListener("click", () => {
+      if (el.projectFile.disabled) return;
+      el.projectFile.click();
+    });
+
+    el.projectFile.addEventListener("change", () => updateStudentFileDisplay());
+
+    function setUploadProgress(percent, text) {
+      if (!el.uploadProgressWrap) return;
+      el.uploadProgressWrap.classList.remove("hidden");
+      if (el.uploadProgressFill) el.uploadProgressFill.style.width = `${Math.min(100, percent)}%`;
+      if (el.uploadProgressText) el.uploadProgressText.textContent = text;
+      if (percent >= 100) {
+        setTimeout(() => el.uploadProgressWrap.classList.add("hidden"), 1200);
+      }
+    }
+
+    el.uploadForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!currentUser || currentUser.role !== "student") return;
+      const tg = langPack(currentLang);
+      if (featuresData.archiveMode) {
+        showToast(tg.toastArchiveReadonly, "error");
+        return;
+      }
+      if (el.uploadFileError) el.uploadFileError.textContent = "";
+      const picked = el.projectFile.files[0];
+      if (!picked) {
+        if (el.uploadFileError) el.uploadFileError.textContent = tg.noFileChosen;
+        showToast(tg.noFileChosen, "error");
+        return;
+      }
+      const fileCheck = isAllowedUploadFile(picked);
+      if (!fileCheck.ok) {
+        const msg = fileCheck.reason === "type" ? tg.toastFileTypeInvalid : tg.toastFileTooLarge;
+        if (el.uploadFileError) el.uploadFileError.textContent = msg;
+        showToast(msg, "error");
+        return;
+      }
+      const fileName = sanitizeText(picked.name, 200);
+      const docType = el.docTypeSelect?.value || "final_dissertation";
+      const myVersions = dissertations
+        .filter((d) => Number(d.studentId) === Number(currentUser.id) && (d.docType || "final_dissertation") === docType)
+        .map((d) => d.version);
+      const nextVersion = myVersions.length ? Math.max(...myVersions) + 1 : 1;
+      const newId = Date.now();
+      const row = {
+        id: newId,
+        studentId: currentUser.id,
+        docType,
+        fileName,
+        version: nextVersion,
+        status: "Pending",
+        comment: "",
+        uploadDate: nowDate(),
+        createdAtTs: Date.now(),
+        fileStored: false,
+        feedbackHistory: []
+      };
+      setButtonLoading(el.uploadBtn, true, tg.uploadBtn);
+      setUploadProgress(15, tg.uploadProgress || "Uploading…");
+      dissertations.push(row);
+      persistAll();
+      renderStudentTable();
+
+      saveDissertationFile(newId, picked)
+        .then(() => {
+          setUploadProgress(100, tg.uploadComplete || "Upload complete");
+          row.fileStored = true;
+          persistAll();
+          renderStudentTable();
+          el.projectFile.value = "";
+          updateStudentFileDisplay();
+          setButtonLoading(el.uploadBtn, false);
+          addActivity("Upload", `Uploaded ${docTypeLabel(docType)} V${nextVersion}: ${fileName}`, currentUser.id);
+          (users.supervisors || []).forEach((s) => pushInAppNotification(s.id, "Upload", `${currentUser.name} uploaded ${docTypeLabel(docType)} V${nextVersion}`));
+          showToast(tg.toastUploadOk, "success");
+        })
+        .catch(() => {
+          dissertations = dissertations.filter((d) => Number(d.id) !== newId);
+          persistAll();
+          renderStudentTable();
+          setUploadProgress(0, "");
+          el.uploadProgressWrap?.classList.add("hidden");
+          setButtonLoading(el.uploadBtn, false);
+          showToast(tg.toastUploadFailed, "error");
+        });
+    });
+
+    el.studentTableBody.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-open-student-file]");
+      if (!btn) return;
+      e.preventDefault();
+      const id = Number(btn.getAttribute("data-open-student-file"));
+      openDissertationFileInBrowser(id);
+    });
+
+    el.resetWorkBtn.addEventListener("click", () => {
+      const t = langPack(currentLang);
+      if (!currentUser || currentUser.role !== "student") return;
+      const sid = Number(currentUser.id);
+      const mine = dissertations.filter((d) => Number(d.studentId) === sid);
+      if (!mine.length) {
+        showToast(t.resetWorkEmpty);
+        return;
+      }
+      if (!confirm(t.resetWorkConfirm)) return;
+      const ids = mine.map((d) => Number(d.id));
+      dissertations = dissertations.filter((d) => Number(d.studentId) !== sid);
+      persistAll();
+      deleteDissertationFilesFromIdb(ids)
+        .finally(() => {
+          renderStudentTable();
+          showToast(t.resetWorkDone);
+        });
+    });
+
+    el.statusFilter.addEventListener("change", renderSupervisorTable);
+
+    el.supervisorTableBody.addEventListener("click", (e) => {
+      const openFileBtn = e.target.closest("[data-open-student-file]");
+      if (openFileBtn) {
+        e.preventDefault();
+        const id = Number(openFileBtn.getAttribute("data-open-student-file"));
+        openDissertationFileInBrowser(id);
+        return;
+      }
+      const browse = e.target.closest("button[data-browse-attach]");
+      if (browse) {
+        const sid = browse.getAttribute("data-browse-attach");
+        document.getElementById(`super-attach-${sid}`)?.click();
+        return;
+      }
+      const btn = e.target.closest("button[data-save-id]");
+      if (!btn) return;
+      if (featuresData.archiveMode) {
+        showToast(langPack(currentLang).toastArchiveReadonly, "error");
+        return;
+      }
+      const itemId = Number(btn.dataset.saveId);
+      const item = dissertations.find((d) => Number(d.id) === itemId);
+      if (!item) return;
+      const selectedStatus = document.getElementById(`status-${itemId}`)?.value;
+      const comment = sanitizeText(document.getElementById(`comment-${itemId}`)?.value, 2000);
+      const attInput = document.getElementById(`super-attach-${itemId}`);
+      if (attInput && attInput.files && attInput.files[0]) {
+        item.supervisorAttachmentName = sanitizeText(attInput.files[0].name, 200);
+      }
+      const prevStatus = item.status;
+      item.status = selectedStatus || item.status;
+      item.comment = comment || "";
+      if (!Array.isArray(item.feedbackHistory)) item.feedbackHistory = [];
+      if (comment || item.status !== prevStatus) {
+        item.feedbackHistory.push({
+          status: item.status,
+          comment: comment || "—",
+          date: nowDate(),
+          by: currentUser?.name || "Supervisor"
+        });
+      }
+      setButtonLoading(btn, true, langPack(currentLang).save);
+      persistAll();
+      addActivity("Review", `Status updated to ${item.status} for ${item.fileName}`, item.studentId);
+      pushInAppNotification(item.studentId, "Status", `Your submission status changed to ${item.status}`);
+      if (comment) pushInAppNotification(item.studentId, "Feedback", `New supervisor feedback on ${item.fileName}`);
+      renderSupervisorSummary();
+      renderSupervisorAnalytics();
+      renderSupervisorTable();
+      const t = langPack(currentLang);
+      setButtonLoading(btn, false);
+      showToast(t.toastUpdated, "success");
+    });
+
+    el.supervisorTableBody.addEventListener("change", (e) => {
+      const inp = e.target;
+      if (!inp || !inp.classList.contains("super-attach-input")) return;
+      const sid = inp.getAttribute("data-attach-id");
+      const nameEl = document.getElementById(`super-attach-name-${sid}`);
+      const f = inp.files[0];
+      if (nameEl) nameEl.textContent = f ? f.name : (dissertations.find((d) => String(d.id) === String(sid))?.supervisorAttachmentName || "—");
+    });
+
+    el.logoutBtn.addEventListener("click", () => {
+      currentUser = null;
+      saveJSON(STORAGE_SESSION_KEY, null);
+      el.loginForm.reset();
+      const t = langPack(currentLang);
+      showToast(t.toastLoggedOut);
+      openCurrentSession();
+    });
+
+    el.homeBtn.addEventListener("click", () => {
+      openCurrentSession();
+    });
+
+    el.featuresBtn.addEventListener("click", () => {
+      showFeaturesView();
+    });
+
+    el.featuresBackBtn.addEventListener("click", () => {
+      openCurrentSession();
+    });
+
+    el.journalBtn.addEventListener("click", () => {
+      showJournalView();
+    });
+
+    el.openSupervisorDetailsBtn.addEventListener("click", () => {
+      showSupervisorDetailsView();
+    });
+
+    el.supervisorDetailsBackBtn.addEventListener("click", () => {
+      openCurrentSession();
+    });
+
+    el.supervisorContactsList.addEventListener("click", async (e) => {
+      const msgBtn = e.target.closest("[data-message-sup]");
+      if (msgBtn) {
+        showMessagesView(Number(msgBtn.getAttribute("data-message-sup")));
+        return;
+      }
+      const copyEmailBtn = e.target.closest("[data-copy-email]");
+      const copyPhoneBtn = e.target.closest("[data-copy-phone]");
+      if (!copyEmailBtn && !copyPhoneBtn) return;
+      const t = langPack(currentLang);
+      const value = copyEmailBtn
+        ? (copyEmailBtn.getAttribute("data-copy-email") || "")
+        : (copyPhoneBtn.getAttribute("data-copy-phone") || "");
+      if (!value) return;
+      try {
+        await navigator.clipboard.writeText(value);
+        showToast(t.toastCopied || i18n.en.toastCopied, "success");
+      } catch {
+        showToast(t.toastFileOpenFailed, "error");
+      }
+    });
+
+    el.themeToggleBtn.addEventListener("click", () => {
+      featuresData.theme = (featuresData.theme === "light") ? "dark" : "light";
+      document.body.classList.toggle("theme-light", featuresData.theme === "light");
+      persistAll();
+    });
+
+    el.announceForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!canManageAcademicFlow()) return;
+      const title = (el.announceTitle.value || "").trim();
+      const body = (el.announceBody.value || "").trim();
+      if (!title || !body) return;
+      featuresData.announcements.push({ id: Date.now(), title, body, date: nowDate() });
+      addActivity("Announcement", title);
+      notifyAllStudents("Announcement", `New announcement: ${title}`);
+      el.announceForm.reset();
+      persistAll();
+      renderAnnouncements();
+    });
+
+    el.meetingForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!currentUser || currentUser.role !== "student") return;
+      const date = (el.meetingDate.value || "").trim();
+      const topic = (el.meetingTopic.value || "").trim();
+      if (!date || !topic) return;
+      featuresData.meetings.push({ id: Date.now(), studentId: Number(currentUser.id), date, topic, status: "Pending" });
+      addActivity("Meeting", `Meeting requested: ${topic}`, currentUser.id);
+      (users.supervisors || []).forEach((s) => pushInAppNotification(s.id, "Meeting", `${currentUser.name} requested a meeting`));
+      el.meetingForm.reset();
+      persistAll();
+      renderMeetings();
+    });
+
+    el.meetingList.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-meeting-status]");
+      if (!btn || !canManageAcademicFlow()) return;
+      const [idRaw, status] = String(btn.getAttribute("data-meeting-status") || "").split(":");
+      const id = Number(idRaw);
+      const m = featuresData.meetings.find((x) => Number(x.id) === id);
+      if (!m) return;
+      m.status = status;
+      pushInAppNotification(m.studentId, "Meeting", `Your meeting was ${status.toLowerCase()}`);
+      addActivity("Meeting", `Meeting ${status}: ${m.topic}`, m.studentId);
+      persistAll();
+      renderMeetings();
+    });
+
+    el.defenseForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!canManageAcademicFlow()) return;
+      const date = (el.defenseDate.value || "").trim();
+      const room = (el.defenseRoom.value || "").trim();
+      if (!date || !room) return;
+      featuresData.defense = { date, room };
+      addActivity("Defense", `Defense scheduled: ${date} @ ${room}`);
+      notifyAllStudents("Defense", `Defense schedule updated: ${date}`);
+      el.defenseForm.reset();
+      persistAll();
+      renderDefense();
+    });
+
+    el.runChecklistBtn.addEventListener("click", () => {
+      const text = String(el.checklistText.value || "");
+      const checks = [
+        { label: "Has Abstract", ok: /abstract/i.test(text) },
+        { label: "Has Methodology", ok: /method/i.test(text) },
+        { label: "Has Conclusion", ok: /conclusion/i.test(text) },
+        { label: "Has References", ok: /reference/i.test(text) },
+        { label: "Length >= 150 words", ok: text.trim().split(/\s+/).filter(Boolean).length >= 150 }
+      ];
+      el.checklistResult.innerHTML = checks.map((c) => `${c.ok ? "✓" : "✗"} ${c.label}`).join("<br />");
+    });
+
+    el.plagForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!currentUser || currentUser.role !== "student") return;
+      const report = (el.plagReportName.value || "").trim();
+      const similarity = Number(el.plagSimilarity.value || 0);
+      if (!report) return;
+      featuresData.plagiarism[String(currentUser.id)] = { report, similarity, verified: similarity <= 20 };
+      persistAll();
+      renderPlagiarism();
+    });
+
+    el.chapterProgressWrap.addEventListener("input", (e) => {
+      const slider = e.target.closest("[data-chapter-idx]");
+      if (!slider || !currentUser) return;
+      const idx = Number(slider.getAttribute("data-chapter-idx"));
+      const key = String(currentUser.id);
+      if (!featuresData.chapterProgress[key]) featuresData.chapterProgress[key] = [0, 0, 0, 0, 0];
+      featuresData.chapterProgress[key][idx] = Number(slider.value || 0);
+      persistAll();
+      renderChapterProgress();
+    });
+
+    el.taskForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const text = (el.taskInput.value || "").trim();
+      if (!text) return;
+      featuresData.tasks.push({ id: Date.now(), text, status: "todo" });
+      el.taskInput.value = "";
+      persistAll();
+      renderTaskBoard();
+    });
+
+    el.taskBoard.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-task-move]");
+      if (!btn) return;
+      const [idRaw, status] = String(btn.getAttribute("data-task-move") || "").split(":");
+      const task = featuresData.tasks.find((t) => Number(t.id) === Number(idRaw));
+      if (!task) return;
+      task.status = status;
+      persistAll();
+      renderTaskBoard();
+    });
+
+    el.notifSaveBtn.addEventListener("click", () => {
+      if (!currentUser) return;
+      featuresData.notifications[String(currentUser.id)] = {
+        email: Boolean(el.notifEmail.checked),
+        whatsapp: Boolean(el.notifWhatsapp.checked),
+        inapp: Boolean(el.notifInApp.checked)
+      };
+      persistAll();
+      showToast(langPack(currentLang).toastNotifSaved, "success");
+    });
+
+    el.journalBackBtn.addEventListener("click", () => {
+      openCurrentSession();
+    });
+
+    el.aboutLink.addEventListener("click", () => {
+      showAboutView();
+    });
+
+    el.aboutBackBtn.addEventListener("click", () => {
+      openCurrentSession();
+    });
+
+    el.langSelect.addEventListener("change", () => {
+      applyLanguage(el.langSelect.value);
+    });
+
+    document.querySelectorAll(".workspace-tab").forEach((btn) => {
+      btn.addEventListener("click", () => showWorkspaceTab(btn.getAttribute("data-ws-tab")));
+    });
+
+    el.notifBtn?.addEventListener("click", showNotificationsView);
+    el.notifBackBtn?.addEventListener("click", openCurrentSession);
+    el.notifMarkAllBtn?.addEventListener("click", () => {
+      if (!currentUser) return;
+      (featuresData.inAppNotifications || []).forEach((n) => {
+        if (Number(n.userId) === Number(currentUser.id)) n.read = true;
+      });
+      persistAll();
+      renderNotifications();
+      updateNavBadges();
+    });
+    el.notifList?.addEventListener("click", (e) => {
+      const item = e.target.closest("[data-notif-id]");
+      if (!item) return;
+      const id = Number(item.getAttribute("data-notif-id"));
+      const n = (featuresData.inAppNotifications || []).find((x) => Number(x.id) === id);
+      if (n) n.read = true;
+      persistAll();
+      renderNotifications();
+      updateNavBadges();
+    });
+
+    el.messagesBtn?.addEventListener("click", () => showMessagesView());
+    el.messagesBackBtn?.addEventListener("click", () => {
+      messageTargetSupervisorId = null;
+      openCurrentSession();
+    });
+    el.messageForm?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+      const t = langPack(currentLang);
+      const text = sanitizeText(el.messageInput.value, 2000);
+      if (!text) return;
+      let toUserId = 0;
+      let toRole = "supervisor";
+      if (currentUser.role === "student") {
+        const supId = messageTargetSupervisorId;
+        const sup = supId
+          ? (users.supervisors || []).find((s) => Number(s.id) === Number(supId))
+          : (users.supervisors || [])[0];
+        if (!sup) { showToast(t.noSupervisorForMessage, "error"); return; }
+        toUserId = sup.id;
+      } else {
+        const lastStudent = [...(featuresData.messages || [])].reverse().find((m) => m.fromRole === "student");
+        toUserId = lastStudent ? lastStudent.fromUserId : (users.students[0]?.id || 0);
+        toRole = "student";
+      }
+      featuresData.messages.push({
+        id: Date.now(),
+        fromUserId: currentUser.id,
+        fromRole: currentUser.role,
+        fromName: currentUser.name,
+        toUserId,
+        toRole,
+        text,
+        date: nowDate(),
+        read: false
+      });
+      addActivity("Message", `${currentUser.name} sent a message`);
+      pushInAppNotification(toUserId, "Message", `New message from ${currentUser.name}`);
+      el.messageInput.value = "";
+      persistAll();
+      renderMessages();
+      updateNavBadges();
+    });
+
+    el.openCompareBtn?.addEventListener("click", showCompareView);
+    el.compareBackBtn?.addEventListener("click", openCurrentSession);
+    el.compareRunBtn?.addEventListener("click", renderCompareResult);
+    el.openCalendarBtn?.addEventListener("click", showCalendarView);
+    el.calendarBackBtn?.addEventListener("click", openCurrentSession);
+    el.downloadReportBtn?.addEventListener("click", generateStudentReport);
+
+    el.ganttForm?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+      const name = sanitizeText(el.ganttNameInput.value, 80);
+      const date = el.ganttDateInput.value;
+      if (!name || !date) return;
+      const key = String(currentUser.id);
+      if (!featuresData.gantt[key]) featuresData.gantt[key] = [];
+      featuresData.gantt[key].push({ id: Date.now(), name, date });
+      el.ganttForm.reset();
+      persistAll();
+      renderGanttChart();
+      addActivity("Milestone", `Added milestone: ${name}`, currentUser.id);
+    });
+    el.ganttChart?.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-gantt-del]");
+      if (!btn || !currentUser) return;
+      const id = Number(btn.getAttribute("data-gantt-del"));
+      const key = String(currentUser.id);
+      featuresData.gantt[key] = (featuresData.gantt[key] || []).filter((m) => Number(m.id) !== id);
+      persistAll();
+      renderGanttChart();
+    });
+
+    el.refForm?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!currentUser) return;
+      const title = sanitizeText(el.refTitle.value, 200);
+      if (!title) return;
+      const key = String(currentUser.id);
+      if (!featuresData.references[key]) featuresData.references[key] = [];
+      featuresData.references[key].push({
+        id: Date.now(),
+        title,
+        doi: sanitizeText(el.refDoi.value, 120),
+        url: sanitizeText(el.refUrl.value, 300),
+        notes: sanitizeText(el.refNotes.value, 500)
+      });
+      el.refForm.reset();
+      persistAll();
+      renderReferences();
+    });
+    el.refList?.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-ref-del]");
+      if (!btn || !currentUser) return;
+      const id = Number(btn.getAttribute("data-ref-del"));
+      const key = String(currentUser.id);
+      featuresData.references[key] = (featuresData.references[key] || []).filter((r) => Number(r.id) !== id);
+      persistAll();
+      renderReferences();
+    });
+
+    ensureDefaultAccounts();
+    document.body.classList.toggle("theme-light", featuresData.theme === "light");
+    applyLanguage(currentLang);
+    updateDeadlineInfo();
+    setInterval(updateDeadlineInfo, 60000);
+    openCurrentSession();
+  </script>
+</body>
+</html>
